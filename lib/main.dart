@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'app/modules/splash/views/splash_view.dart';
-import 'app/modules/onboarding/views/onboarding_view.dart';
-import 'app/modules/register/views/register_view.dart';
-import 'app/modules/login/views/login_view.dart';
-import 'app/modules/face_scan/views/face_scan_view.dart';
-import 'app/modules/home/views/home_view.dart';
+import 'app/routes/app_pages.dart';
 import 'dart:ui';
-
-
 
 void main() {
   runApp(const MyApp());
@@ -21,24 +14,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Simpul App',
-      debugShowCheckedModeBanner: false, // Menghilangkan pita debug
-      initialRoute: '/splash',
+      debugShowCheckedModeBanner: false,
+      initialRoute: AppPages.INITIAL, // Otomatis ke /splash-screen
+      getPages: AppPages.routes,      
 
       scrollBehavior: const MaterialScrollBehavior().copyWith(
         dragDevices: {
-          PointerDeviceKind.mouse, // Mengizinkan mouse
-          PointerDeviceKind.touch, // Mengizinkan sentuhan jari (di HP)
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.touch,
         },
       ),
-
-      getPages: [
-        GetPage(name: '/splash', page: () => const SplashView()), 
-        GetPage(name: '/onboarding', page: () => const OnboardingView()),
-        GetPage(name: '/register', page: () => const RegisterView()),
-        GetPage(name: '/login', page: () => const LoginView()),
-        GetPage(name: '/home', page: () => const HomeView()),
-        GetPage(name: '/face-scan', page: () => const FaceScanView()),
-      ],
     );
   }
 }
