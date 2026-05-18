@@ -4,6 +4,8 @@ import 'app/modules/splash/views/splash_view.dart';
 import 'app/modules/onboarding/views/onboarding_view.dart';
 import 'app/modules/register/views/register_view.dart';
 import 'app/modules/login/views/login_view.dart';
+import 'app/modules/face_scan/views/face_scan_view.dart';
+import 'app/modules/home/views/home_view.dart';
 import 'dart:ui';
 
 
@@ -34,6 +36,8 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/onboarding', page: () => const OnboardingView()),
         GetPage(name: '/register', page: () => const RegisterView()),
         GetPage(name: '/login', page: () => const LoginView()),
+        GetPage(name: '/home', page: () => const HomeView()),
+        GetPage(name: '/face-scan', page: () => const FaceScanView()),
       ],
     );
   }
