@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
+import '../modules/edukasi/bindings/edukasi_binding.dart';
+import '../modules/edukasi/views/edukasi_view.dart';
 import '../modules/face_scan/bindings/face_scan_binding.dart';
 import '../modules/face_scan/views/face_scan_view.dart';
 import '../modules/home/bindings/home_binding.dart';
@@ -72,6 +74,11 @@ class AppPages {
       name: _Paths.VENDOR_DETAIL,
       page: () => const VendorDetailView(),
       binding: VendorDetailBinding(),
+    ),
+    GetPage(
+      name: _Paths.EDUKASI,
+      page: () => const EdukasiView(),
+      binding: EdukasiBinding(),
     ),
   ];
 }
