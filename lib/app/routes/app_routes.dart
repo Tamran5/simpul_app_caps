@@ -12,6 +12,7 @@ abstract class Routes {
   static const TODO = _Paths.TODO;
   static const VENDOR = _Paths.VENDOR;
   static const VENDOR_DETAIL = _Paths.VENDOR_DETAIL;
+  static const EDUKASI = _Paths.EDUKASI;
 }
 
 abstract class _Paths {
@@ -25,4 +26,5 @@ abstract class _Paths {
   static const TODO = '/todo';
   static const VENDOR = '/vendor';
   static const VENDOR_DETAIL = '/vendor-detail';
+  static const EDUKASI = '/edukasi';
 }
