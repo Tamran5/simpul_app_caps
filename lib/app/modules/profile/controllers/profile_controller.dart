@@ -118,21 +118,21 @@ class ProfileController extends GetxController {
           )),
           
           // 3. Update Email
-          Obx(() => SwitchListTile(
-            title: const Text('Update Email', style: TextStyle(fontSize: 15)),
-            activeColor: const Color(0xFF596E63),
-            value: isEmailUpdate.value,
-            onChanged: (val) => isEmailUpdate.value = val,
-          )),
+          // Obx(() => SwitchListTile(
+          //   title: const Text('Update Email', style: TextStyle(fontSize: 15)),
+          //   activeColor: const Color(0xFF596E63),
+          //   value: isEmailUpdate.value,
+          //   onChanged: (val) => isEmailUpdate.value = val,
+          // )),
           
-          // 4. Promo Vendor
-          Obx(() => SwitchListTile(
-            title: const Text('Promo Vendor', style: TextStyle(fontSize: 15)),
-            activeColor: const Color(0xFF596E63),
-            value: isVendorPromo.value,
-            onChanged: (val) => isVendorPromo.value = val,
-          )),
-          const SizedBox(height: 16),
+          // // 4. Promo Vendor
+          // Obx(() => SwitchListTile(
+          //   title: const Text('Promo Vendor', style: TextStyle(fontSize: 15)),
+          //   activeColor: const Color(0xFF596E63),
+          //   value: isVendorPromo.value,
+          //   onChanged: (val) => isVendorPromo.value = val,
+          // )),
+          // const SizedBox(height: 16),
         ],
       ),
     ),
