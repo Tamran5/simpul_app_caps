@@ -6,6 +6,8 @@ import '../modules/edukasi/bindings/edukasi_binding.dart';
 import '../modules/edukasi/views/edukasi_view.dart';
 import '../modules/face_scan/bindings/face_scan_binding.dart';
 import '../modules/face_scan/views/face_scan_view.dart';
+import '../modules/faq/bindings/faq_binding.dart';
+import '../modules/faq/views/faq_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/login/bindings/login_binding.dart';
@@ -94,6 +96,11 @@ class AppPages {
       name: _Paths.EDIT_PROFILE,
       page: () => const EditProfileView(),
       binding: EditProfileBinding(),
+    ),
+    GetPage(
+      name: _Paths.FAQ,
+      page: () => const FaqView(),
+      binding: FaqBinding(),
     ),
   ];
 }

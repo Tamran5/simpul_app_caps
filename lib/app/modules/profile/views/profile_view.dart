@@ -62,14 +62,14 @@ class ProfileView extends GetView<ProfileController> {
                     Get.toNamed('/face-scan', arguments: {'from': 'profile'}); 
                   },
                 ),
-                _SettingItem(Icons.notifications_none, 'Notifikasi', () {}),
+                _SettingItem(Icons.notifications_none, 'Notifikasi', () => controller.tampilkanPengaturanNotifikasi()),
               ]),
               const SizedBox(height: 24),
 
               // 4. Grup Lainnya
               _buildSectionLabel('LAINNYA'),
               _buildSettingsList([
-                _SettingItem(Icons.help_outline, 'Pusat Bantuan', () {}),
+                _SettingItem(Icons.help_outline, 'Pusat Bantuan', () => Get.toNamed('/faq')),
                 _SettingItem(Icons.info_outline, 'Tentang Simpul', () {}),
               ]),
               const SizedBox(height: 32),
