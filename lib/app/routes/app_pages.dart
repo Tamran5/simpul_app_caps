@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
+import '../modules/face_scan/bindings/face_scan_binding.dart';
+import '../modules/face_scan/views/face_scan_view.dart';
 import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
 import '../modules/onboarding/bindings/onboarding_binding.dart';
@@ -29,6 +31,11 @@ class AppPages {
       name: _Paths.LOGIN,
       page: () => const LoginView(),
       binding: LoginBinding(),
+    ),
+    GetPage(
+      name: _Paths.FACE_SCAN,
+      page: () => const FaceScanView(),
+      binding: FaceScanBinding(),
     ),
   ];
 }
