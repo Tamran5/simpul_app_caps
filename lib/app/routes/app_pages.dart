@@ -1,19 +1,23 @@
 import 'package:get/get.dart';
 
-import '../modules/splash/bindings/splash_binding.dart';
-import '../modules/splash/views/splash_view.dart';
+import '../modules/face_scan/bindings/face_scan_binding.dart';
+import '../modules/face_scan/views/face_scan_view.dart';
+import '../modules/home/bindings/home_binding.dart';
+import '../modules/home/views/home_view.dart';
+import '../modules/login/bindings/login_binding.dart';
+import '../modules/login/views/login_view.dart';
 import '../modules/onboarding/bindings/onboarding_binding.dart';
 import '../modules/onboarding/views/onboarding_view.dart';
 import '../modules/register/bindings/register_binding.dart';
 import '../modules/register/views/register_view.dart';
-import '../modules/login/bindings/login_binding.dart';
-import '../modules/login/views/login_view.dart';
-import '../modules/home/bindings/home_binding.dart';
-import '../modules/home/views/home_view.dart';
-import '../modules/face_scan/bindings/face_scan_binding.dart';
-import '../modules/face_scan/views/face_scan_view.dart';
+import '../modules/splash/bindings/splash_binding.dart';
+import '../modules/splash/views/splash_view.dart';
 import '../modules/todo/bindings/todo_binding.dart';
 import '../modules/todo/views/todo_view.dart';
+import '../modules/vendor/bindings/vendor_binding.dart';
+import '../modules/vendor/views/vendor_view.dart';
+import '../modules/vendorDetail/bindings/vendor_detail_binding.dart';
+import '../modules/vendorDetail/views/vendor_detail_view.dart';
 
 part 'app_routes.dart';
 
@@ -58,6 +62,16 @@ class AppPages {
       name: _Paths.TODO,
       page: () => const TodoView(),
       binding: TodoBinding(),
+    ),
+    GetPage(
+      name: _Paths.VENDOR,
+      page: () => const VendorView(),
+      binding: VendorBinding(),
+    ),
+    GetPage(
+      name: _Paths.VENDOR_DETAIL,
+      page: () => const VendorDetailView(),
+      binding: VendorDetailBinding(),
     ),
   ];
 }

@@ -10,6 +10,8 @@ abstract class Routes {
   static const LOGIN = _Paths.LOGIN;
   static const FACE_SCAN = _Paths.FACE_SCAN;
   static const TODO = _Paths.TODO;
+  static const VENDOR = _Paths.VENDOR;
+  static const VENDOR_DETAIL = _Paths.VENDOR_DETAIL;
 }
 
 abstract class _Paths {
@@ -21,4 +23,6 @@ abstract class _Paths {
   static const LOGIN = '/login';
   static const FACE_SCAN = '/face-scan';
   static const TODO = '/todo';
+  static const VENDOR = '/vendor';
+  static const VENDOR_DETAIL = '/vendor-detail';
 }

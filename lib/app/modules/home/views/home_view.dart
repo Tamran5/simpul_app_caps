@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
+import '../../todo/views/todo_view.dart';
+import '../../vendor/views/vendor_view.dart';
 
 
 class HomeView extends StatelessWidget {
@@ -31,6 +33,8 @@ class HomeView extends StatelessWidget {
             index: controller.tabIndex.value,
             children: [
               _buildHomeContent(),     // Index 0: Beranda
+              const TodoView(),         
+              const VendorView(),
     // Index 4: Profil
             ],
           );
