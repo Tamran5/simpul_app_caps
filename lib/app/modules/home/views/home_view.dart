@@ -4,6 +4,7 @@ import '../controllers/home_controller.dart';
 import '../../todo/views/todo_view.dart';
 import '../../vendor/views/vendor_view.dart';
 import '../../edukasi/views/edukasi_view.dart';
+import '../../profile/views/profile_view.dart';
 
 
 class HomeView extends StatelessWidget {
@@ -37,7 +38,7 @@ class HomeView extends StatelessWidget {
               const TodoView(),         
               const VendorView(),
               const EdukasiView(),
-    // Index 4: Profil
+              const ProfileView(),
             ],
           );
         }),
