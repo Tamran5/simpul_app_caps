@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'app/modules/splash/views/splash_view.dart';
 import 'app/modules/onboarding/views/onboarding_view.dart';
+import 'app/modules/register/views/register_view.dart';
 import 'dart:ui';
 
 
@@ -30,6 +31,7 @@ class MyApp extends StatelessWidget {
       getPages: [
         GetPage(name: '/splash', page: () => const SplashView()), 
         GetPage(name: '/onboarding', page: () => const OnboardingView()),
+        GetPage(name: '/register', page: () => const RegisterView()),
       ],
     );
   }
