@@ -8,6 +8,7 @@ abstract class Routes {
   static const ONBOARDING = _Paths.ONBOARDING;
   static const REGISTER = _Paths.REGISTER;
   static const LOGIN = _Paths.LOGIN;
+  static const FACE_SCAN = _Paths.FACE_SCAN;
 }
 
 abstract class _Paths {
@@ -17,4 +18,5 @@ abstract class _Paths {
   static const ONBOARDING = '/onboarding';
   static const REGISTER = '/register';
   static const LOGIN = '/login';
+  static const FACE_SCAN = '/face-scan';
 }
