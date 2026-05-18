@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
+import '../modules/editProfile/bindings/edit_profile_binding.dart';
+import '../modules/editProfile/views/edit_profile_view.dart';
 import '../modules/edukasi/bindings/edukasi_binding.dart';
 import '../modules/edukasi/views/edukasi_view.dart';
 import '../modules/face_scan/bindings/face_scan_binding.dart';
@@ -29,7 +31,8 @@ class AppPages {
   AppPages._();
 
   // 1. Mengubah halaman pertama kali terbuka ke Splash Screen
-  static const INITIAL = Routes.SPLASH_SCREEN;
+  static const INITIAL = Routes.HOME;
+  //static const INITIAL = Routes.SPLASH_SCREEN;
 
   static final routes = [
     GetPage(
@@ -86,6 +89,11 @@ class AppPages {
       name: _Paths.PROFILE,
       page: () => const ProfileView(),
       binding: ProfileBinding(),
+    ),
+    GetPage(
+      name: _Paths.EDIT_PROFILE,
+      page: () => const EditProfileView(),
+      binding: EditProfileBinding(),
     ),
   ];
 }
