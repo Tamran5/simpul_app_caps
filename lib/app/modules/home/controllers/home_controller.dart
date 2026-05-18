@@ -1,23 +1,16 @@
 import 'package:get/get.dart';
 
 class HomeController extends GetxController {
-  //TODO: Implement HomeController
+  // Variabel untuk melacak tab mana yang sedang aktif
+  var tabIndex = 0.obs;
 
-  final count = 0.obs;
-  @override
-  void onInit() {
-    super.onInit();
+  var tanggalPernikahan = DateTime(2027, 6, 18).obs;
+
+  void updateJadwalNikah(DateTime tanggalBaru) {
+    tanggalPernikahan.value = tanggalBaru;
   }
 
-  @override
-  void onReady() {
-    super.onReady();
+  void changeTabIndex(int index) {
+    tabIndex.value = index;
   }
-
-  @override
-  void onClose() {
-    super.onClose();
-  }
-
-  void increment() => count.value++;
 }
