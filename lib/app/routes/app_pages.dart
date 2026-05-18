@@ -1,22 +1,34 @@
 import 'package:get/get.dart';
 
-import '../modules/face_scan/bindings/face_scan_binding.dart';
-import '../modules/face_scan/views/face_scan_view.dart';
-import '../modules/login/bindings/login_binding.dart';
-import '../modules/login/views/login_view.dart';
+import '../modules/splash/bindings/splash_binding.dart';
+import '../modules/splash/views/splash_view.dart';
 import '../modules/onboarding/bindings/onboarding_binding.dart';
 import '../modules/onboarding/views/onboarding_view.dart';
 import '../modules/register/bindings/register_binding.dart';
 import '../modules/register/views/register_view.dart';
+import '../modules/login/bindings/login_binding.dart';
+import '../modules/login/views/login_view.dart';
+import '../modules/home/bindings/home_binding.dart';
+import '../modules/home/views/home_view.dart';
+import '../modules/face_scan/bindings/face_scan_binding.dart';
+import '../modules/face_scan/views/face_scan_view.dart';
+import '../modules/todo/bindings/todo_binding.dart';
+import '../modules/todo/views/todo_view.dart';
 
 part 'app_routes.dart';
 
 class AppPages {
   AppPages._();
 
-  static const INITIAL = Routes.HOME;
+  // 1. Mengubah halaman pertama kali terbuka ke Splash Screen
+  static const INITIAL = Routes.SPLASH_SCREEN;
 
   static final routes = [
+    GetPage(
+      name: _Paths.SPLASH_SCREEN,
+      page: () => const SplashView(),
+      binding: SplashScreenBinding(),
+    ),
     GetPage(
       name: _Paths.ONBOARDING,
       page: () => const OnboardingView(),
@@ -33,9 +45,19 @@ class AppPages {
       binding: LoginBinding(),
     ),
     GetPage(
+      name: _Paths.HOME,
+      page: () => const HomeView(),
+      binding: HomeBinding(),
+    ),
+    GetPage(
       name: _Paths.FACE_SCAN,
       page: () => const FaceScanView(),
       binding: FaceScanBinding(),
+    ),
+    GetPage(
+      name: _Paths.TODO,
+      page: () => const TodoView(),
+      binding: TodoBinding(),
     ),
   ];
 }
