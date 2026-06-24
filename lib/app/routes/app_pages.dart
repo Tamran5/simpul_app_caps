@@ -1,9 +1,22 @@
 import 'package:get/get.dart';
 
+import '../../data/models/article_model.dart';
+import '../modules/article_detail/bindings/article_detail_binding.dart';
+import '../modules/article_detail/views/article_detail_view.dart';
+import '../modules/bookmark/bindings/bookmark_binding.dart';
+import '../modules/bookmark/views/bookmark_view.dart';
+import '../modules/connectPartner/bindings/connect_partner_binding.dart';
+import '../modules/connectPartner/views/connect_partner_view.dart';
+import '../modules/editProfile/bindings/edit_profile_binding.dart';
+import '../modules/editProfile/views/edit_profile_view.dart';
 import '../modules/edukasi/bindings/edukasi_binding.dart';
 import '../modules/edukasi/views/edukasi_view.dart';
 import '../modules/face_scan/bindings/face_scan_binding.dart';
 import '../modules/face_scan/views/face_scan_view.dart';
+import '../modules/faq/bindings/faq_binding.dart';
+import '../modules/faq/views/faq_view.dart';
+import '../modules/forgot_password/bindings/forgot_password_binding.dart';
+import '../modules/forgot_password/views/forgot_password_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/login/bindings/login_binding.dart';
@@ -29,6 +42,7 @@ class AppPages {
   AppPages._();
 
   // 1. Mengubah halaman pertama kali terbuka ke Splash Screen
+  // static const INITIAL = Routes.HOME;
   static const INITIAL = Routes.SPLASH_SCREEN;
 
   static final routes = [
@@ -79,13 +93,43 @@ class AppPages {
     ),
     GetPage(
       name: _Paths.EDUKASI,
-      page: () => const EdukasiView(),
+      page: () => EdukasiView(), // <--- Hapus kata 'const' di sini
       binding: EdukasiBinding(),
     ),
     GetPage(
       name: _Paths.PROFILE,
       page: () => const ProfileView(),
       binding: ProfileBinding(),
+    ),
+    GetPage(
+      name: _Paths.EDIT_PROFILE,
+      page: () => const EditProfileView(),
+      binding: EditProfileBinding(),
+    ),
+    GetPage(
+      name: _Paths.FAQ,
+      page: () => const FaqView(),
+      binding: FaqBinding(),
+    ),
+    GetPage(
+      name: _Paths.CONNECT_PARTNER,
+      page: () => const ConnectPartnerView(),
+      binding: ConnectPartnerBinding(),
+    ),
+    GetPage(
+      name: _Paths.FORGOT_PASSWORD,
+      page: () => const ForgotPasswordView(),
+      binding: ForgotPasswordBinding(),
+    ),
+    GetPage(
+      name: _Paths.ARTICLE_DETAIL,
+      page: () => ArticleDetailView(article: Get.arguments as Article),
+      binding: ArticleDetailBinding(),
+    ),
+    GetPage(
+      name: _Paths.BOOKMARK,
+      page: () => const BookmarkView(),
+      binding: BookmarkBinding(),
     ),
   ];
 }

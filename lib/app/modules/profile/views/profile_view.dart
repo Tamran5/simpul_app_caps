@@ -30,57 +30,70 @@ class ProfileView extends GetView<ProfileController> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
+      // 🔄 Membungkus body utama dengan Obx untuk memantau status loading server
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: primaryGreen,
+            ),
+          );
+        }
 
-              // 1. Header Profil (Avatar & Nama)
-              _buildProfileHeader(),
-              const SizedBox(height: 32),
+        return RefreshIndicator(
+          onRefresh: () => controller.fetchUserProfile(), // Tarik layar ke bawah untuk refresh data
+          color: primaryGreen,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
 
-              // 2. Kartu Wedding Info
-              _buildWeddingInfoCard(context),
-              const SizedBox(height: 32),
+                  // 1. Header Profil (Avatar & Nama)
+                  _buildProfileHeader(),
+                  const SizedBox(height: 32),
 
-              // 3. Grup Pengaturan Akun
-              _buildSectionLabel('PENGATURAN AKUN'),
-              _buildSettingsList([
-                _SettingItem(
-                  Icons.person_outline,
-                  'Edit Profil',
-                  () => controller.editProfile(),
-                ),
-                _SettingItem(
-                  Icons.face_retouching_natural,
-                  'Face ID Registration',
-                  () {
-                    // SINKRONISASI: Menggunakan rute nama agar tidak perlu import file view lain
-                    Get.toNamed('/face-scan', arguments: {'from': 'profile'}); 
-                  },
-                ),
-                _SettingItem(Icons.notifications_none, 'Notifikasi', () {}),
-              ]),
-              const SizedBox(height: 24),
+                  // 2. Kartu Wedding Info
+                  _buildWeddingInfoCard(context),
+                  const SizedBox(height: 32),
 
-              // 4. Grup Lainnya
-              _buildSectionLabel('LAINNYA'),
-              _buildSettingsList([
-                _SettingItem(Icons.help_outline, 'Pusat Bantuan', () {}),
-                _SettingItem(Icons.info_outline, 'Tentang Simpul', () {}),
-              ]),
-              const SizedBox(height: 32),
+                  // 3. Grup Pengaturan Akun
+                  _buildSectionLabel('PENGATURAN AKUN'),
+                  _buildSettingsList([
+                    _SettingItem(
+                      Icons.person_outline,
+                      'Edit Profil',
+                      () => controller.editProfile(),
+                    ),
+                    _SettingItem(
+                      Icons.face_retouching_natural,
+                      'Face ID Registration',
+                      () {
+                        Get.toNamed('/face-scan', arguments: {'from': 'profile'}); 
+                      },
+                    ),
+                  ]),
+                  const SizedBox(height: 24),
 
-              // 5. Tombol Keluar
-              _buildLogoutButton(),
-              const SizedBox(height: 40),
-            ],
+                  // 4. Grup Lainnya
+                  _buildSectionLabel('LAINNYA'),
+                  _buildSettingsList([
+                    _SettingItem(Icons.help_outline, 'Pusat Bantuan', () => Get.toNamed('/faq')),
+                    _SettingItem(Icons.info_outline, 'Tentang Simpul', () {}),
+                  ]),
+                  const SizedBox(height: 32),
+
+                  // 5. Tombol Keluar
+                  _buildLogoutButton(),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 
@@ -117,125 +130,120 @@ class ProfileView extends GetView<ProfileController> {
           ],
         ),
         const SizedBox(height: 16),
-        Obx(
-          () => Text(
-            controller.userName.value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: textDark,
-            ),
+        Text(
+          controller.userName.value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: textDark,
           ),
         ),
         const SizedBox(height: 4),
-        Obx(
-          () => Text(
-            controller.userEmail.value,
-            style: const TextStyle(fontSize: 14, color: textGrey),
-          ),
+        Text(
+          controller.userEmail.value,
+          style: const TextStyle(fontSize: 14, color: textGrey),
         ),
       ],
     );
   }
 
- Widget _buildWeddingInfoCard(BuildContext context) {
-    return Obx(() {
-      // KONDISI 1: JIKA BELUM SINKRON (REQ-043) -> Tampilkan Tombol Ajakan
-      if (!controller.isSynced.value) {
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF7F9F8), // Background soft green tint
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE2E7E5)),
-          ),
-          child: Column(
-            children: [
-              const Icon(Icons.favorite_border, color: primaryGreen, size: 32),
-              const SizedBox(height: 8),
-              const Text(
-                'Belum Terhubung dengan Pasangan',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textDark),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Hubungkan akunmu untuk mengelola tugas dan jadwal bersama.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: textGrey),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => controller.hubungkanPasangan(), // Memicu sinkronisasi
-                  icon: const Icon(Icons.link, color: Colors.white, size: 18),
-                  label: const Text(
-                    'Hubungkan Pasangan', // Teks Wajib sesuai REQ-043 PRD
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryGreen,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      }
-
-      // KONDISI 2: JIKA SUDAH SUKSES SINKRON (REQ-043) -> Tampilkan Nama & Tanggal
+  Widget _buildWeddingInfoCard(BuildContext context) {
+    // KONDISI 1: JIKA BELUM SINKRON -> Tampilkan Tombol Ajakan
+    if (!controller.isSynced.value) {
       return Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFFF7F9F8), 
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: borderGrey),
+          border: Border.all(color: const Color(0xFFE2E7E5)),
         ),
-        child: Row(
+        child: Column(
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('PASANGAN', style: TextStyle(fontSize: 10, color: textGrey, letterSpacing: 1.2)),
-                  const SizedBox(height: 4),
-                  Text(controller.partnerName.value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textDark)),
-                ],
-              ),
+            const Icon(Icons.favorite_border, color: primaryGreen, size: 32),
+            const SizedBox(height: 8),
+            const Text(
+              'Belum Terhubung dengan Pasangan',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textDark),
             ),
-            Container(width: 1, height: 30, color: borderGrey),
-            Expanded(
-              child: InkWell(
-                onTap: () => controller.aturJadwalNikah(context),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 20, top: 4, bottom: 4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('TANGGAL', style: TextStyle(fontSize: 10, color: textGrey, letterSpacing: 1.2)),
-                          Icon(Icons.edit_calendar_outlined, size: 12, color: primaryGreen),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(controller.weddingDate.value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textDark)),
-                    ],
-                  ),
+            const SizedBox(height: 4),
+            const Text(
+              'Hubungkan akunmu untuk mengelola tugas dan jadwal bersama.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: textGrey),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => controller.hubungkanPasangan(), 
+                icon: const Icon(Icons.link, color: Colors.white, size: 18),
+                label: const Text(
+                  'Hubungkan Pasangan', 
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryGreen,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
                 ),
               ),
             ),
           ],
         ),
       );
-    });
+    }
+
+    // KONDISI 2: JIKA SUDAH SUKSES SINKRON -> Tampilkan Nama & Tanggal
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderGrey),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('PASANGAN', style: TextStyle(fontSize: 10, color: textGrey, letterSpacing: 1.2)),
+                const SizedBox(height: 4),
+                Text(controller.partnerName.value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textDark)),
+              ],
+            ),
+          ),
+          Container(width: 1, height: 30, color: borderGrey),
+          Expanded(
+            child: InkWell(
+              onTap: () => controller.aturJadwalNikah(context),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 20, top: 4, bottom: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('TANGGAL', style: TextStyle(fontSize: 10, color: textGrey, letterSpacing: 1.2)),
+                        Icon(Icons.edit_calendar_outlined, size: 12, color: primaryGreen),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(controller.weddingDate.value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textDark)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
+
   Widget _buildSectionLabel(String label) {
     return Align(
       alignment: Alignment.centerLeft,

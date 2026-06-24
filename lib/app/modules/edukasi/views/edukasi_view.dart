@@ -1,246 +1,246 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
 import '../controllers/edukasi_controller.dart';
+import '../../bookmark/controllers/bookmark_controller.dart';
+import '../../../../data/models/article_model.dart';
+import '../../article_detail/views/article_detail_view.dart';
 
-class EdukasiView extends StatelessWidget {
-  const EdukasiView({Key? key}) : super(key: key);
 
-  static const Color primaryGreen = Color(0xFF596E63);
-  static const Color primaryLight = Color(0xFFE8F0EE);
-  static const Color bgLight = Color(0xFFFBFBFB);
-  static const Color textDark = Color(0xFF333333);
-  static const Color textGrey = Color(0xFF8A8A8A);
-  static const Color borderGrey = Color(0xFFE8E8E8);
+class EdukasiView extends GetView<EdukasiController> {
+  EdukasiView({Key? key}) : super(key: key);
+
+  // Inisialisasi BookmarkController untuk fitur simpan artikel
+  final BookmarkController bookmarkC = Get.put(BookmarkController());
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(EdukasiController());
-
     return Scaffold(
-      backgroundColor: bgLight,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: bgLight,
+        backgroundColor: Colors.white,
         elevation: 0,
+        title: const Text('Simpul', style: TextStyle(fontFamily: 'Serif', color: Colors.green, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
         centerTitle: true,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Simpul',
-          style: TextStyle(
-            color: primaryGreen,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            fontStyle: FontStyle.italic,
-          ),
-        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.bookmark_border, color: primaryGreen),
+            icon: const Icon(Icons.bookmark_border, color: Colors.black87),
             onPressed: () {
-              Get.snackbar('Bookmark', 'Fitur simpan artikel akan segera hadir.');
+              // Navigasi ke halaman Bookmark (Sesuaikan nama rute jika berbeda di app_pages.dart)
+              Get.toNamed('/bookmark');
             },
-          ),
+          )
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header Teks
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-            child: const Text(
-              'Pusat Edukasi',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: textDark),
-            ),
-          ),
-          
-          // Chips Kategori Horizontal
-          const SizedBox(height: 8),
-          _buildCategoryFilter(controller),
-          const SizedBox(height: 16),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator(color: Colors.green));
+        }
 
-          // Konten Berita/Edukasi yang bisa di-scroll
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Hanya tampilkan Artikel Utama jika kategori 'Terbaru' dipilih
-                    Obx(() {
-                      if (controller.selectedCategory.value == 'Terbaru' && controller.featuredArticle.value != null) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Bacaan Pilihan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
-                            const SizedBox(height: 12),
-                            _buildFeaturedArticle(controller.featuredArticle.value!, controller),
-                            const SizedBox(height: 24),
-                            const Text('Artikel Lainnya', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
-                            const SizedBox(height: 12),
-                          ],
-                        );
-                      }
-                      return const SizedBox.shrink(); // Sembunyikan jika bukan kategori terbaru
-                    }),
-
-                    // Daftar Artikel (Grid/List)
-                    Obx(() {
-                      final articles = controller.filteredArticles;
-                      if (articles.isEmpty) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 40.0),
-                            child: Text('Belum ada artikel di kategori ini.', style: TextStyle(color: textGrey)),
+        return RefreshIndicator(
+          color: Colors.green,
+          onRefresh: () async => controller.fetchArticles(),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Pusat Edukasi', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, fontFamily: 'Serif')),
+                  const SizedBox(height: 16),
+                  
+                  // --- Kategori Filter (Chips) ---
+                  SizedBox(
+                    height: 35,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: controller.categories.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        String category = controller.categories[index];
+                        bool isSelected = controller.selectedCategory.value == category;
+                        return GestureDetector(
+                          onTap: () => controller.changeCategory(category),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isSelected ? Colors.green[800] : Colors.white,
+                              border: Border.all(color: isSelected ? Colors.transparent : Colors.grey[300]!),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              category,
+                              style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? Colors.white : Colors.black87),
+                            ),
                           ),
                         );
-                      }
-                      return ListView.separated(
-                        shrinkWrap: true, // Penting agar ListView bisa berada di dalam SingleChildScrollView
-                        physics: const NeverScrollableScrollPhysics(), // Scroll diatur oleh SingleChildScrollView induk
-                        itemCount: articles.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 16),
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Jika tidak ada artikel setelah difilter
+                  if (controller.filteredArticles.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 50),
+                      child: Center(child: Text('Tidak ada artikel di kategori ini.', style: TextStyle(color: Colors.grey))),
+                    )
+                  else ...[
+                    // --- Artikel Utama (Bacaan Pilihan) ---
+                    const Text('Bacaan Pilihan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    _buildFeaturedArticle(controller.featuredArticle!),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // --- Artikel Lainnya ---
+                    if (controller.otherArticles.isNotEmpty) ...[
+                      const Text('Artikel Lainnya', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: controller.otherArticles.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
-                          return _buildArticleItem(articles[index], controller);
+                          return _buildListArticle(controller.otherArticles[index]);
                         },
-                      );
-                    }),
-                    const SizedBox(height: 40), // Jarak aman paling bawah
+                      ),
+                    ]
                   ],
-                ),
+                  const SizedBox(height: 30), // Padding bawah
+                ],
               ),
             ),
           ),
-        ],
-      ),
+        );
+      }),
     );
   }
 
-  // Widget Filter Kategori
-  Widget _buildCategoryFilter(EdukasiController controller) {
-    return SizedBox(
-      height: 36,
-      child: ListView.separated(
-        physics: const BouncingScrollPhysics(),
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        itemCount: controller.categories.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final category = controller.categories[index];
-          return Obx(() {
-            final isSelected = controller.selectedCategory.value == category;
-            return GestureDetector(
-              onTap: () => controller.changeCategory(category),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: isSelected ? primaryGreen : Colors.white,
-                  border: Border.all(color: isSelected ? primaryGreen : borderGrey),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  category,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                    color: isSelected ? Colors.white : textGrey,
-                  ),
-                ),
-              ),
-            );
-          });
-        },
-      ),
-    );
-  }
-
-  // Widget Artikel Utama (Hero Image)
-  Widget _buildFeaturedArticle(ArticleModel article, EdukasiController controller) {
+  // Komponen Card Besar
+  Widget _buildFeaturedArticle(Article article) {
     return GestureDetector(
-      onTap: () => controller.openArticle(article.title),
+      onTap: () => Get.to(() => ArticleDetailView(article: article)),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          border: Border.all(color: Colors.grey[200]!),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: borderGrey),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 8)),
-          ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              child: Image.network(
-                article.imageUrl,
-                height: 180,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 180, color: primaryLight,
-                  child: const Icon(Icons.image_not_supported, color: primaryGreen),
+            Stack(
+              children: [
+                Hero(
+                  tag: 'article_image_${article.id}', // Tambahan Hero animasi
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    // PENGGUNAAN CACHED NETWORK IMAGE
+                    child: article.imageUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: article.imageUrl,
+                            height: 180,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              height: 180,
+                              color: Colors.grey[100],
+                              child: const Center(child: CircularProgressIndicator(color: Colors.green, strokeWidth: 2)),
+                            ),
+                            errorWidget: (context, url, error) => _fallbackImage(180),
+                          )
+                        : _fallbackImage(180),
+                  ),
                 ),
-              ),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                    child: Obx(() {
+                      // Cek apakah artikel ini ada di list bookmark
+                      bool isSaved = bookmarkC.bookmarkedArticles.any((a) => a.id == article.id);
+                      return IconButton(
+                        icon: Icon(
+                          isSaved ? Icons.bookmark : Icons.bookmark_border, 
+                          size: 20, 
+                          color: isSaved ? Colors.green : Colors.black54
+                        ),
+                        onPressed: () => bookmarkC.toggleBookmark(article.id),
+                        constraints: const BoxConstraints(minWidth: 35, minHeight: 35),
+                        padding: EdgeInsets.zero,
+                      );
+                    }),
+                  ),
+                )
+              ],
             ),
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: primaryLight, borderRadius: BorderRadius.circular(6)),
-                        child: Text(
-                          article.category.toUpperCase(),
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primaryGreen),
-                        ),
+                        decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(6)),
+                        child: Text(article.kategori.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.green)),
                       ),
-                      const Spacer(),
-                      Icon(Icons.access_time, size: 12, color: textGrey),
-                      const SizedBox(width: 4),
-                      Text(article.readTime, style: TextStyle(fontSize: 10, color: textGrey)),
+                      Row(
+                        children: [
+                          const Icon(Icons.schedule, size: 14, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(article.readTime, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        ],
+                      )
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Text(article.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textDark, height: 1.3)),
+                  Text(article.judul, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
                 ],
               ),
-            ),
+            )
           ],
         ),
       ),
     );
   }
 
-  // Widget Item Artikel List (Gambar Kiri, Teks Kanan)
-  Widget _buildArticleItem(ArticleModel article, EdukasiController controller) {
+  // Komponen Card Kecil
+  Widget _buildListArticle(Article article) {
     return GestureDetector(
-      onTap: () => controller.openArticle(article.title),
+      onTap: () => Get.to(() => ArticleDetailView(article: article)), 
       child: Container(
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderGrey),
-        ),
+        decoration: BoxDecoration(border: Border.all(color: Colors.grey[200]!), borderRadius: BorderRadius.circular(16)),
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                article.imageUrl,
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: 80, height: 80, color: primaryLight,
-                ),
+            Hero(
+              tag: 'article_image_${article.id}', // Tambahan Hero animasi
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                // PENGGUNAAN CACHED NETWORK IMAGE
+                child: article.imageUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: article.imageUrl,
+                        height: 80,
+                        width: 80,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          height: 80, 
+                          width: 80, 
+                          color: Colors.grey[100],
+                          child: const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.green, strokeWidth: 2))),
+                        ),
+                        errorWidget: (context, url, error) => _fallbackImage(80, 80),
+                      )
+                    : _fallbackImage(80, 80),
               ),
             ),
             const SizedBox(width: 16),
@@ -248,31 +248,40 @@ class EdukasiView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    article.category.toUpperCase(),
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primaryGreen),
-                  ),
+                  Text(article.kategori.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
                   const SizedBox(height: 6),
-                  Text(
-                    article.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textDark, height: 1.3),
-                  ),
+                  Text(article.judul, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, height: 1.2), maxLines: 2, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 8),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(Icons.access_time, size: 12, color: textGrey),
-                      const SizedBox(width: 4),
-                      Text(article.readTime, style: TextStyle(fontSize: 10, color: textGrey)),
+                      Text('${article.readTime} read', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                      Obx(() {
+                        // Cek apakah artikel ini ada di list bookmark
+                        bool isSaved = bookmarkC.bookmarkedArticles.any((a) => a.id == article.id);
+                        return IconButton(
+                          icon: Icon(
+                            isSaved ? Icons.bookmark : Icons.bookmark_border, 
+                            size: 18, 
+                            color: isSaved ? Colors.green : Colors.grey
+                          ),
+                          onPressed: () => bookmarkC.toggleBookmark(article.id),
+                          constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                          padding: EdgeInsets.zero,
+                        );
+                      }),
                     ],
-                  ),
+                  )
                 ],
               ),
-            ),
+            )
           ],
         ),
       ),
     );
+  }
+
+  Widget _fallbackImage(double height, [double width = double.infinity]) {
+    return Container(height: height, width: width, color: Colors.grey[200], child: const Icon(Icons.image, color: Colors.grey));
   }
 }
