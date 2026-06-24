@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/login_controller.dart';
 
-class LoginView extends StatelessWidget {
+class LoginView extends GetView<LoginController> {
   const LoginView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(LoginController());
+    // Menggunakan GetView membuat variabel 'controller' otomatis tersedia tanpa Get.put()
     
-    // Warna yang sama dengan halaman Register
     const Color primaryGreen = Color(0xFF596E63);
     const Color bgColor = Color(0xFFF5F6F8);
     const Color textDark = Color(0xFF1A1A1A);
@@ -40,8 +39,6 @@ class LoginView extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // LOGO DIHAPUS (Sesuai permintaan)
-                    
                     // Judul Simpul (Disamakan dengan Register)
                     const Text(
                       'Simpul',
@@ -50,7 +47,7 @@ class LoginView extends StatelessWidget {
                         fontSize: 32,
                         fontWeight: FontWeight.w700,
                         fontStyle: FontStyle.italic,
-                        color: primaryGreen, // Menggunakan warna hijau
+                        color: primaryGreen,
                         letterSpacing: 1.0,
                       ),
                     ),
@@ -131,28 +128,49 @@ class LoginView extends StatelessWidget {
                     )),
                     const SizedBox(height: 32),
 
-                    // Tombol Log In
-                    SizedBox(
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () => controller.login(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryGreen,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    // TOMBOL LOG IN (SUDAH MENDUKUNG ANIMASI LOADING & ANTI-SPAM CLICK)
+                    Obx(() => SizedBox(
+                          height: 56,
+                          child: ElevatedButton(
+                            // Ketika loading, onPressed bernilai null (tombol otomatis beku/disabled)
+                            onPressed: controller.isLoading.value 
+                                ? null 
+                                : () => controller.login(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: controller.isLoading.value 
+                                  ? primaryGreen.withOpacity(0.6) 
+                                  : primaryGreen,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: controller.isLoading.value
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2.5,
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Text(
+                                        'Log In to Simpul',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                                    ],
+                                  ),
                           ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Log In to Simpul',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
+                        )),
                     const SizedBox(height: 32),
 
                     // Garis Pemisah (Divider)
@@ -286,7 +304,7 @@ class LoginView extends StatelessWidget {
     );
   }
 
-  // Widget pembantu untuk pura-pura jadi logo Google
+  // Widget pembantu untuk logo Google
   Widget _buildGoogleIcon() {
     return Container(
       width: 24,

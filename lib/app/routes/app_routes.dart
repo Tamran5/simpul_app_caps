@@ -16,6 +16,12 @@ abstract class Routes {
   static const PROFILE = _Paths.PROFILE;
   static const EDIT_PROFILE = _Paths.EDIT_PROFILE;
   static const FAQ = _Paths.FAQ;
+  static const CONNECT_PARTNER = _Paths.CONNECT_PARTNER;
+  static const CONNECT_PARTNERCKS = _Paths.CONNECT_PARTNERCKS;
+  static const AUTH = _Paths.AUTH;
+  static const FORGOT_PASSWORD = _Paths.FORGOT_PASSWORD;
+  static const ARTICLE_DETAIL = _Paths.ARTICLE_DETAIL;
+  static const BOOKMARK = _Paths.BOOKMARK;
 }
 
 abstract class _Paths {
@@ -33,4 +39,10 @@ abstract class _Paths {
   static const PROFILE = '/profile';
   static const EDIT_PROFILE = '/edit-profile';
   static const FAQ = '/faq';
+  static const CONNECT_PARTNER = '/connect-partner';
+  static const CONNECT_PARTNERCKS = '/connect-partnercks';
+  static const AUTH = '/auth';
+  static const FORGOT_PASSWORD = '/forgot-password';
+  static const ARTICLE_DETAIL = '/article-detail';
+  static const BOOKMARK = '/bookmark';
 }

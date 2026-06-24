@@ -1,100 +1,74 @@
 import 'package:get/get.dart';
-import 'package:flutter/material.dart';
-
-// Model Artikel
-class ArticleModel {
-  final String id;
-  final String title;
-  final String category;
-  final String readTime;
-  final String imageUrl;
-
-  ArticleModel({
-    required this.id,
-    required this.title,
-    required this.category,
-    required this.readTime,
-    required this.imageUrl,
-  });
-}
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../data/models/article_model.dart';
+import '../../../core/values/api_config.dart'; 
 
 class EdukasiController extends GetxController {
-  // Kategori Artikel
-  final List<String> categories = ['Terbaru', 'Legal & KUA', 'Keuangan', 'Mental Health', 'Inspirasi'];
+  var articles = <Article>[].obs;
+  var isLoading = true.obs;
+  
+  // Variabel untuk state filter kategori
   var selectedCategory = 'Terbaru'.obs;
-
-  // Data Artikel (Dummy)
-  var articles = <ArticleModel>[].obs;
-  var featuredArticle = Rxn<ArticleModel>();
+  // Daftar kategori disesuaikan dengan tombol filter horizontal
+  final List<String> categories = ['Terbaru', 'Birokrasi', 'Keuangan', 'Konseling', 'Agama'];
 
   @override
   void onInit() {
     super.onInit();
-    _loadDummyArticles();
+    fetchArticles();
   }
 
-  void _loadDummyArticles() {
-    // Artikel Unggulan (Hero)
-    featuredArticle.value = ArticleModel(
-      id: '0',
-      title: 'Panduan Lengkap Mengurus Dokumen N1-N4 di Kelurahan',
-      category: 'Legal & KUA',
-      readTime: '5 min read',
-      imageUrl: 'https://picsum.photos/seed/doc/600/400',
-    );
+  void fetchArticles() async {
+    try {
+      isLoading(true);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('access_token');
 
-    // Daftar Artikel Lainnya
-    articles.addAll([
-      ArticleModel(
-        id: '1',
-        title: '5 Cara Menyatukan Pendapat dengan Keluarga Pasangan',
-        category: 'Mental Health',
-        readTime: '4 min read',
-        imageUrl: 'https://picsum.photos/seed/family/300/300',
-      ),
-      ArticleModel(
-        id: '2',
-        title: 'Tips Membagi Budget Pernikahan Agar Tidak Over-budget',
-        category: 'Keuangan',
-        readTime: '6 min read',
-        imageUrl: 'https://picsum.photos/seed/money/300/300',
-      ),
-      ArticleModel(
-        id: '3',
-        title: 'Tren Warna Gaun Pernikahan Tahun 2026',
-        category: 'Inspirasi',
-        readTime: '3 min read',
-        imageUrl: 'https://picsum.photos/seed/dress/300/300',
-      ),
-      ArticleModel(
-        id: '4',
-        title: 'Apa yang Harus Disiapkan Sebelum Mengikuti Suscatin?',
-        category: 'Legal & KUA',
-        readTime: '4 min read',
-        imageUrl: 'https://picsum.photos/seed/study/300/300',
-      ),
-    ]);
+      // TEMBAK API MENGGUNAKAN API CONFIG
+      var url = Uri.parse(ApiConfig.articles); 
+      
+      var response = await http.get(url, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token', // Membawa tiket masuk (JWT)
+      });
+
+      if (response.statusCode == 200) {
+        var jsonResult = json.decode(response.body);
+        var dataList = jsonResult['data'] as List;
+        articles.value = dataList.map((e) => Article.fromJson(e)).toList();
+      } else {
+        Get.snackbar('Gagal', 'Tidak dapat memuat artikel.');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Terjadi kesalahan jaringan.');
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  // Getter untuk filter artikel berdasarkan Chips yang dipilih
+  List<Article> get filteredArticles {
+    if (selectedCategory.value == 'Terbaru') {
+      return articles;
+    }
+    return articles.where((article) => article.kategori.toLowerCase() == selectedCategory.value.toLowerCase()).toList();
+  }
+
+  // Getter Artikel Utama (Featured Article yang menonjol di atas)
+  Article? get featuredArticle {
+    var list = filteredArticles;
+    return list.isNotEmpty ? list.first : null;
+  }
+
+  // Getter Artikel Reguler (List vertikal ringkas di bawahnya)
+  List<Article> get otherArticles {
+    var list = filteredArticles;
+    return list.length > 1 ? list.sublist(1) : [];
   }
 
   void changeCategory(String category) {
     selectedCategory.value = category;
-  }
-
-  List<ArticleModel> get filteredArticles {
-    if (selectedCategory.value == 'Terbaru') {
-      return articles;
-    }
-    return articles.where((a) => a.category == selectedCategory.value).toList();
-  }
-
-  void openArticle(String title) {
-    // Fungsi saat artikel diklik
-    Get.snackbar(
-      'Membaca Artikel',
-      title,
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: const Color(0xFF596E63),
-      colorText: const Color(0xFFFFFFFF),
-    );
   }
 }

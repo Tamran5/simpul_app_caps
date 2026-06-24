@@ -29,7 +29,7 @@ class OnboardingController extends GetxController {
       );
     } else {
       // Jika slide terakhir, pergi ke Home
-      Get.offAllNamed('/register');
+      Get.offAllNamed('/login');
     }
   }
 }

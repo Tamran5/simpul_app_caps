@@ -35,7 +35,7 @@ class FaceScanController extends GetxController {
 
     if (args != null && args['from'] == 'register') {
       // Jika datang dari halaman Pendaftaran -> Masuk ke Beranda
-      Get.offAllNamed('/home');
+      Get.offAllNamed('/connect-partner');
       Get.snackbar(
         'Selamat Datang!',
         'Registrasi berhasil. Data wajah Anda telah diamankan.',
