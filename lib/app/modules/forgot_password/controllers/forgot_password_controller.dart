@@ -45,17 +45,11 @@ class ForgotPasswordController extends GetxController {
   }
 
   // STEP 1: Minta OTP ke Flask
-  Future<void> requestOtp() async {
-    if (emailController.text.isEmpty) {
-      Get.snackbar("Peringatan", "Masukkan alamat email Anda!", backgroundColor: Colors.orange.withOpacity(0.1));
-      return;
-    }
-
+ Future<void> requestOtp() async {
     isLoading.value = true;
     try {
-      // Tembak API Menggunakan ApiConfig
       final response = await http.post(
-        Uri.parse(ApiConfig.forgotPassword), // <--- Menggunakan ApiConfig
+        Uri.parse(ApiConfig.forgotPassword), // Sesuaikan dengan endpointmu
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": emailController.text.trim()}),
       );
@@ -64,18 +58,47 @@ class ForgotPasswordController extends GetxController {
 
       if (response.statusCode == 200) {
         isEmailSent.value = true;
-        startOtpTimer(); // 🚀 Mulai timer saat email sukses terkirim
-        Get.snackbar("Sukses", data['message'] ?? "OTP terkirim!", backgroundColor: Colors.green.withOpacity(0.1));
+        
+        // --- SINKRONISASI DETIK: Tangkap titipan angka dari Flask ---
+        int titipanDetikServer = data['remaining_seconds'] ?? 300; 
+
+        startTimer(customSeconds: titipanDetikServer); // <--- Suntikkan ke jam HP!
+
+        Get.snackbar("Sukses", data['message'], backgroundColor: const Color(0xFFE8F0EE));
       } else {
-        Get.snackbar("Gagal", data['message'] ?? "Email tidak ditemukan.", backgroundColor: Colors.redAccent.withOpacity(0.1));
+        Get.snackbar("Gagal", data['message']);
       }
     } catch (e) {
-      Get.snackbar("Koneksi Gagal", "Tidak dapat terhubung ke server.");
+      Get.snackbar("Error", "Gagal terhubung ke server.");
     } finally {
       isLoading.value = false;
     }
   }
 
+  // --- PERBARUI FUNGSI TIMER AGARDapat Menerima Parameter 'customSeconds' ---
+  void startTimer({int customSeconds = 300}) {
+    _timer?.cancel(); // Bunuh timer yang sedang berjalan sebelumnya (jika ada)
+    
+    var startDetik = customSeconds; 
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (startDetik <= 0) {
+        timer.cancel();
+        timerString.value = "Kedaluwarsa";
+      } else {
+        startDetik--;
+        
+        // Konversi matematika sisa detik menjadi format MM:SS
+        int menit = startDetik ~/ 60;
+        int detik = startDetik % 60;
+        
+        String mStr = menit.toString().padLeft(2, '0');
+        String sStr = detik.toString().padLeft(2, '0');
+        
+        timerString.value = "$mStr:$sStr";
+      }
+    });
+  }
   // STEP 2: Verifikasi OTP & Reset Password
   Future<void> resetPassword() async {
     // 1. Validasi kolom kosong

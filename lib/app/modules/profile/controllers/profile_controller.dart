@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Tambahan untuk fitur copy-paste (Clipboard)
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,319 +8,407 @@ import '../../home/controllers/home_controller.dart';
 import '../../../core/values/api_config.dart';
 
 class ProfileController extends GetxController {
-  var isLoading = false.obs;
+  // ─── State ────────────────────────────────────────────────────────
+  var isLoading     = false.obs;
+  var userName      = ''.obs;
+  var userEmail     = ''.obs;
+  var userPhone     = ''.obs;
+  var userPhotoUrl  = ''.obs;
 
-  var userName = "Memuat nama...".obs;
-  var userEmail = "Memuat email...".obs;
+  // ─── Pair / Sync ──────────────────────────────────────────────────
+  var myUniqueCode  = ''.obs;
+  var syncStatus    = 'none'.obs;
+  var isSynced      = false.obs;
+  var partnerName   = ''.obs;
+  var weddingDate   = ''.obs;
 
-  // 🔗 STATE SINKRONISASI PASANGAN (Sistem Real-time)
-  var myUniqueCode = "".obs; // Kode milik user sendiri
-  var syncStatus = "none".obs; // Status: none, pending_sent, pending_received, synced
-  var isSynced = false.obs; 
-  var partnerName = "".obs;
-  var weddingDate = "".obs;
-
-  // Controller untuk input text kode unik
   final kodePasanganController = TextEditingController();
 
-  // Variabel baseUrl lokal DIHAPUS karena menggunakan ApiConfig
+  // ═══════════════════════════════════════════════════════════════════
+  // LIFECYCLE
+  // ═══════════════════════════════════════════════════════════════════
 
   @override
   void onInit() {
     super.onInit();
-    if (userName.value == "Memuat nama...") {
-      fetchUserProfile();
-    }
-    // fetchUserProfile(); 
+    fetchUserProfile();
   }
 
-  // 📥 AMBIL DATA PROFIL ASLI DARI SERVER FLASK
+  @override
+  void onClose() {
+    kodePasanganController.dispose();
+    super.onClose();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FETCH PROFILE
+  // ═══════════════════════════════════════════════════════════════════
+
   Future<void> fetchUserProfile() async {
     isLoading.value = true;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('access_token');
-
+      final token = await _getToken();
       if (token == null) {
         Get.offAllNamed('/login');
         return;
       }
 
-      // TEMBAK API MENGGUNAKAN API CONFIG
       final response = await http.get(
-        Uri.parse(ApiConfig.profile), // <--- Menggunakan ApiConfig
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token" 
-        },
-      );
+        Uri.parse(ApiConfig.profile),
+        headers: _headers(token),
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
-        final resBody = jsonDecode(response.body);
-        final data = resBody['data'];
-        
-        userName.value = data['name'] ?? 'User';
-        userEmail.value = data['email'] ?? '';
-        
-        // Update State Relasi
-        myUniqueCode.value = data['my_code'] ?? '';
-        syncStatus.value = data['sync_status'] ?? 'none';
-        isSynced.value = (syncStatus.value == 'synced'); // True jika status sudah synced
-        partnerName.value = data['partner_name'] ?? '';
-        weddingDate.value = data['wedding_date'] ?? '';
+        final data = (jsonDecode(response.body) as Map)['data'] as Map;
 
-        // Otomatis sinkronisasi sisa waktu hitung mundur di Beranda
-        if (isSynced.value && weddingDate.value.isNotEmpty && Get.isRegistered<HomeController>()) {
-           // update logika jadwal jika diperlukan
-        }
-        
-        // 🔔 NOTIFIKASI OTOMATIS: Munculkan popup jika ada undangan masuk saat buka profil
+        userName.value     = data['name']         ?? '';
+        userEmail.value    = data['email']        ?? '';
+        userPhone.value    = data['phone']        ?? '';
+        userPhotoUrl.value = data['photo_url']    ?? '';
+        myUniqueCode.value = data['my_code']      ?? data['unique_code'] ?? '';
+        syncStatus.value   = data['sync_status']  ?? 'none';
+        isSynced.value     = syncStatus.value == 'synced';
+        partnerName.value  = data['partner_name'] ?? '';
+        weddingDate.value  = data['wedding_date'] ?? '';
+
         if (syncStatus.value == 'pending_received') {
-           tampilkanDialogPersetujuan();
+          WidgetsBinding.instance.addPostFrameCallback(
+              (_) => tampilkanDialogPersetujuan());
         }
-
       } else if (response.statusCode == 401) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.clear();
-        Get.offAllNamed('/login');
+        await _clearAndLogout();
       }
     } catch (e) {
-      print("Error memuat profil: $e");
+      Get.snackbar('Gagal', 'Tidak dapat memuat profil. Cek koneksi internet.',
+          backgroundColor: Colors.redAccent, colorText: Colors.white);
     } finally {
       isLoading.value = false;
     }
   }
 
-  // 🔄 FUNGSI UTAMA TOMBOL "HUBUNGKAN PASANGAN" DI UI
-  void hubungkanPasangan() {
-    if (syncStatus.value == 'pending_sent') {
-      Get.snackbar(
-        'Menunggu Persetujuan', 
-        'Kamu sudah mengirimkan undangan. Menunggu pasanganmu menerima.', 
-        backgroundColor: Colors.orange.withOpacity(0.1)
-      );
-      return;
-    }
-    
-    if (syncStatus.value == 'pending_received') {
-      tampilkanDialogPersetujuan();
-      return;
-    }
+  // ═══════════════════════════════════════════════════════════════════
+  // PHOTO
+  // ═══════════════════════════════════════════════════════════════════
 
-    // Tampilkan BottomSheet untuk Input Kode Pasangan & Lihat Kode Sendiri
-    Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white, 
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Sinkronisasi Akun', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            
-            // Tampilan Kode Unik Milik Sendiri (Bisa disalin)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Kode Unik Kamu', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      Text(myUniqueCode.value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.copy, color: Color(0xFF596E63)),
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: myUniqueCode.value));
-                      Get.snackbar('Disalin', 'Kode unik berhasil disalin!', snackPosition: SnackPosition.TOP);
-                    },
-                  )
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Input Text Kode Pasangan
-            TextField(
-              controller: kodePasanganController,
-              textCapitalization: TextCapitalization.characters, // Otomatis huruf kapital
-              decoration: InputDecoration(
-                labelText: 'Masukkan Kode Pasangan',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                prefixIcon: const Icon(Icons.link, color: Color(0xFF596E63)),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF596E63)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Tombol Kirim
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  Get.back(); // Tutup bottom sheet dulu
-                  kirimPermintaanSinkronisasi(); // Jalankan proses ke server
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF596E63),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Kirim Permintaan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            )
-          ],
-        ),
-      ),
-      isScrollControlled: true,
+  /// Buka picker foto (integrasikan image_picker sesuai kebutuhan)
+  void changePhoto() {
+    // TODO: tambahkan image_picker + upload ke ApiConfig.profilePhoto
+    Get.snackbar('Segera Hadir', 'Fitur ganti foto sedang disiapkan.',
+        backgroundColor: const Color(0xFF3D6B5F), colorText: Colors.white);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // COPY CODE
+  // ═══════════════════════════════════════════════════════════════════
+
+  void copyMyCode() {
+    if (myUniqueCode.value.isEmpty) return;
+    Clipboard.setData(ClipboardData(text: myUniqueCode.value));
+    Get.snackbar(
+      'Disalin ✓',
+      'Kode ${myUniqueCode.value} berhasil disalin.',
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: const Color(0xFF3D6B5F),
+      colorText: Colors.white,
+      duration: const Duration(seconds: 2),
     );
   }
 
-  // 📤 KIRIM KODE UNIK PASANGAN KE FLASK
+  // ═══════════════════════════════════════════════════════════════════
+  // PAIRING (dipertahankan untuk referensi HomeController)
+  // ═══════════════════════════════════════════════════════════════════
+
   Future<void> kirimPermintaanSinkronisasi() async {
-    if (kodePasanganController.text.trim().isEmpty) return;
-    
+    final code = kodePasanganController.text.trim();
+    if (code.isEmpty) return;
+
     isLoading.value = true;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('access_token');
-
-      // TEMBAK API MENGGUNAKAN API CONFIG
+      final token = await _getToken();
       final response = await http.post(
-        Uri.parse(ApiConfig.connectPartner), // <--- Menggunakan ApiConfig
-        headers: {
-          "Content-Type": "application/json", 
-          "Authorization": "Bearer $token"
-        },
-        body: jsonEncode({"partner_code": kodePasanganController.text.trim()}),
-      );
+        Uri.parse(ApiConfig.connectPartner),
+        headers: _headers(token!),
+        body: jsonEncode({'partner_code': code}),
+      ).timeout(const Duration(seconds: 15));
 
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body) as Map;
       if (response.statusCode == 200) {
         kodePasanganController.clear();
-        fetchUserProfile(); // Refresh data untuk mengupdate status di HP menjadi 'pending_sent'
-        Get.snackbar('Berhasil', data['message'], backgroundColor: Colors.green.withOpacity(0.1));
+        await fetchUserProfile();
+        Get.snackbar('Berhasil ✓', data['message'] ?? 'Permintaan terkirim.',
+            backgroundColor: const Color(0xFF3D6B5F), colorText: Colors.white);
       } else {
-        Get.snackbar('Gagal', data['message'], backgroundColor: Colors.redAccent.withOpacity(0.1));
+        Get.snackbar('Gagal', data['message'] ?? 'Terjadi kesalahan.',
+            backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
-    } catch (e) {
-      Get.snackbar("Error", "Gagal menghubungi server.");
+    } catch (_) {
+      Get.snackbar('Error', 'Gagal menghubungi server.',
+          backgroundColor: Colors.redAccent, colorText: Colors.white);
     } finally {
       isLoading.value = false;
     }
   }
 
-  // 📥 JENDELA PERSETUJUAN (MUNCUL JIKA ADA REQUEST MASUK DARI PASANGAN)
   void tampilkanDialogPersetujuan() {
-    Get.defaultDialog(
-      title: "Permintaan Masuk!",
-      middleText: "Seseorang mengundangmu untuk mensinkronkan akun pernikahan. Apakah kamu menerima?",
-      textConfirm: "Terima",
-      textCancel: "Tolak",
-      confirmTextColor: Colors.white,
-      cancelTextColor: Colors.redAccent,
-      buttonColor: const Color(0xFF596E63),
-      onConfirm: () {
-        Get.back(); // Tutup pop-up
-        responPermintaan('accept'); // Terima
-      },
-      onCancel: () {
-        responPermintaan('reject'); // Tolak
-      }
+    if (Get.isDialogOpen == true) return;
+    Get.dialog(
+      _IncomingPairDialog(
+        senderName: partnerName.value,
+        onAccept: () {
+          Get.back();
+          responPermintaan('accept');
+        },
+        onReject: () {
+          Get.back();
+          responPermintaan('reject');
+        },
+      ),
+      barrierDismissible: false,
     );
   }
 
-  // 📤 FUNGSI MERESPONS REQUEST (TERIMA/TOLAK) KE SERVER FLASK
   Future<void> responPermintaan(String action) async {
     isLoading.value = true;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('access_token');
+      final token = await _getToken();
+      await http.post(
+        Uri.parse(ApiConfig.respondPartner),
+        headers: _headers(token!),
+        body: jsonEncode({'action': action}),
+      ).timeout(const Duration(seconds: 15));
 
-      // TEMBAK API MENGGUNAKAN API CONFIG
-      final response = await http.post(
-        Uri.parse(ApiConfig.respondPartner), // <--- Menggunakan ApiConfig
-        headers: {
-          "Content-Type": "application/json", 
-          "Authorization": "Bearer $token"
-        },
-        body: jsonEncode({"action": action}),
+      await fetchUserProfile();
+      Get.snackbar(
+        action == 'accept' ? 'Terhubung! 💕' : 'Ditolak',
+        action == 'accept'
+            ? 'Kamu dan $partnerName kini merencanakan bersama.'
+            : 'Permintaan sinkronisasi dibatalkan.',
+        backgroundColor: action == 'accept'
+            ? const Color(0xFF3D6B5F)
+            : Colors.grey.shade700,
+        colorText: Colors.white,
       );
-
-      if (response.statusCode == 200) {
-        fetchUserProfile(); // Refresh UI menjadi Sinkron Penuh atau Batal
-        Get.snackbar(
-          'Sukses', 
-          action == 'accept' ? 'Akun berhasil terhubung!' : 'Permintaan dibatalkan.', 
-          backgroundColor: Colors.green.withOpacity(0.1)
-        );
-      }
-    } catch (e) {
-      Get.snackbar("Error", "Terjadi kesalahan koneksi.");
+    } catch (_) {
+      Get.snackbar('Error', 'Terjadi kesalahan koneksi.',
+          backgroundColor: Colors.redAccent, colorText: Colors.white);
     } finally {
       isLoading.value = false;
     }
   }
 
-  // 📅 FUNGSI ATUR TANGGAL PERNIKAHAN VIA CALENDAR PICKER
-  void aturJadwalNikah(BuildContext context) async {
+  // ═══════════════════════════════════════════════════════════════════
+  // WEDDING DATE
+  // ═══════════════════════════════════════════════════════════════════
+
+  Future<void> aturJadwalNikah(BuildContext context) async {
     if (!isSynced.value) return;
 
-    DateTime? pickedDate = await showDatePicker(
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+
+    // Tentukan initialDate yang aman (tidak boleh < firstDate)
+    DateTime initialDate = tomorrow;
+    if (weddingDate.value.isNotEmpty) {
+      // Coba parse dari HomeController jika tersedia
+      if (Get.isRegistered<HomeController>()) {
+        final target = Get.find<HomeController>().targetDate;
+        if (target != null && target.isAfter(DateTime.now())) {
+          initialDate = target;
+        }
+      }
+    }
+
+    final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime(2027, 6, 18),
-      firstDate: DateTime.now(),
+      initialDate: initialDate,
+      firstDate: tomorrow,      // ← tidak bisa pilih hari ini/lampau
       lastDate: DateTime(2035),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF596E63),
-              onPrimary: Colors.white,
-              onSurface: Color(0xFF1A1A1A),
-            ),
+      helpText: 'Pilih tanggal pernikahan',
+      cancelText: 'Batal',
+      confirmText: 'Simpan',
+      builder: (ctx, child) => Theme(
+        data: ThemeData.light().copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF3D6B5F),
+            onPrimary: Colors.white,
+            surface: Colors.white,
+            onSurface: Color(0xFF111827),
           ),
-          child: child!,
-        );
-      },
+          dialogBackgroundColor: Colors.white,
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF3D6B5F)),
+          ),
+        ),
+        child: child!,
+      ),
     );
 
-    if (pickedDate != null) {
-      List<String> daftarBulan = [
-        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    if (picked != null) {
+      // Format tampilan
+      const months = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
       ];
-      
-      weddingDate.value = "${pickedDate.day} ${daftarBulan[pickedDate.month - 1]} ${pickedDate.year}";
-      
+      weddingDate.value =
+          '${picked.day} ${months[picked.month - 1]} ${picked.year}';
+
+      // Sinkron ke HomeController jika ada
       if (Get.isRegistered<HomeController>()) {
-        Get.find<HomeController>().updateJadwalNikah(pickedDate);
+        Get.find<HomeController>().updateWeddingDate(picked);
       }
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // NAVIGATION
+  // ═══════════════════════════════════════════════════════════════════
+
   void editProfile() => Get.toNamed('/edit-profile');
 
-  // KELUAR AKUN SECARA BERSIH DAN AMAN
+  // ═══════════════════════════════════════════════════════════════════
+  // LOGOUT
+  // ═══════════════════════════════════════════════════════════════════
+
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); 
-    Get.offAllNamed('/login'); 
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Keluar?',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text(
+            'Kamu akan keluar dari akun Simpul. Yakin?',
+            style: TextStyle(color: Color(0xFF6B7280))),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Batal',
+                style: TextStyle(color: Color(0xFF6B7280))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+            onPressed: () => Get.back(result: true),
+            child: const Text('Keluar',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _clearAndLogout();
+    }
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // PRIVATE HELPERS
+  // ═══════════════════════════════════════════════════════════════════
+
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('access_token');
+  }
+
+  Map<String, String> _headers(String token) => {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+
+  Future<void> _clearAndLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    Get.offAllNamed('/login');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DIALOG: Incoming Pair
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _IncomingPairDialog extends StatelessWidget {
+  const _IncomingPairDialog({
+    required this.senderName,
+    required this.onAccept,
+    required this.onReject,
+  });
+
+  final String senderName;
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
+
   @override
-  void onClose() {
-    kodePasanganController.dispose(); 
-    super.onClose();
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: const BoxDecoration(
+                  color: Color(0xFFFFF0F0), shape: BoxShape.circle),
+              child: const Icon(Icons.favorite_rounded,
+                  color: Colors.redAccent, size: 36),
+            ),
+            const SizedBox(height: 16),
+            const Text('Ada Ajakan Masuk 💌',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF111827))),
+            const SizedBox(height: 8),
+            Text(
+              '$senderName mengajakmu merencanakan pernikahan bersama di Simpul.',
+              textAlign: TextAlign.center,
+              style:
+                  const TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.5),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      side: const BorderSide(color: Color(0xFFEEEEEE), width: 1.5),
+                    ),
+                    onPressed: onReject,
+                    child: const Text('Tolak',
+                        style: TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF3D6B5F),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: onAccept,
+                    child: const Text('Terima 💕',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

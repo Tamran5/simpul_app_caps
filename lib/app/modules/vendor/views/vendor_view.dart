@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/vendor_controller.dart';
 
-
 class VendorView extends StatelessWidget {
   const VendorView({Key? key}) : super(key: key);
 
@@ -33,10 +32,14 @@ class VendorView extends StatelessWidget {
             fontStyle: FontStyle.italic,
           ),
         ),
+        // --- TAMBAHAN BARU: Ikon Navigasi ke Halaman Favorit ---
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none, color: primaryGreen),
-            onPressed: () {},
+            icon: const Icon(Icons.favorite, color: primaryGreen),
+            onPressed: () {
+              // Pastikan nama rute ini sesuai dengan yang ter-generate di app_routes.dart kamu
+              Get.toNamed('/favorite-vendor'); 
+            },
           ),
         ],
       ),
@@ -44,12 +47,12 @@ class VendorView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Header Teks
-          Padding(
-            padding: const EdgeInsets.symmetric(
+          const Padding(
+            padding: EdgeInsets.symmetric(
               horizontal: 24.0,
               vertical: 8.0,
             ),
-            child: const Text(
+            child: Text(
               'Katalog Vendor',
               style: TextStyle(
                 fontSize: 28,
@@ -159,7 +162,6 @@ class VendorView extends StatelessWidget {
   }
 
   // Widget Kartu Vendor
-  // Widget Kartu Vendor
   Widget _buildVendorCard(VendorModel vendor, VendorController controller) {
     return GestureDetector(
       onTap: () {
@@ -211,6 +213,7 @@ class VendorView extends StatelessWidget {
                   right: 12,
                   child: Obx(
                     () => GestureDetector(
+                      // --- TOMBOL LOVE: Ini sekarang menembak API Flask ---
                       onTap: () => controller.toggleFavorite(vendor),
                       child: Container(
                         padding: const EdgeInsets.all(6),

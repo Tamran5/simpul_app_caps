@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../data/models/article_model.dart';
-// 1. IMPORT BOOKMARK CONTROLLER (Pastikan path-nya sesuai)
 import '../../bookmark/controllers/bookmark_controller.dart'; 
 
 class ArticleDetailView extends StatelessWidget {

@@ -2,23 +2,27 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http; 
+import 'package:shared_preferences/shared_preferences.dart'; // Wajib untuk sistem Smart-Detect
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/values/api_config.dart'; 
 
 class RegisterController extends GetxController {
-  // Controller untuk teks input
+  // Controller untuk teks input dasar
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController(); 
   final phoneController = TextEditingController();
 
+  // --- PENYESUAIAN BARU: Controller & State untuk Kalkulator Syarat Nikah ---
+  final ktpCityController = TextEditingController();
+  final weddingCityController = TextEditingController();
+  var isPartnerForeigner = false.obs;
+
   // Variabel reaktif untuk status & Dropdown
   var isLoading = false.obs; 
-  var selectedAgama = ''.obs;
-  var selectedJenisKelamin = ''.obs;
+  var selectedAgama = 'Islam'.obs;              // Beri nilai default agar dropdown UI tidak crash
+  var selectedJenisKelamin = 'Laki-laki'.obs;   // Beri nilai default
   var isPasswordHidden = true.obs;
-
-  // Variabel baseUrl lokal DIHAPUS karena kita akan menggunakan ApiConfig
 
   // Daftar pilihan agama
   final List<String> agamaList = [
@@ -46,8 +50,9 @@ class RegisterController extends GetxController {
     if (nameController.text.isEmpty || 
         emailController.text.isEmpty || 
         passwordController.text.isEmpty || 
-        selectedJenisKelamin.value.isEmpty || 
-        selectedAgama.value.isEmpty) {
+        phoneController.text.isEmpty ||
+        ktpCityController.text.isEmpty ||
+        weddingCityController.text.isEmpty) {
       Get.snackbar(
         "Peringatan", 
         "Semua data pendaftaran wajib diisi!",
@@ -57,13 +62,18 @@ class RegisterController extends GetxController {
       return;
     }
 
+    // --- LOGIKA KALKULASI OTOMATIS: NUMPANG NIKAH ---
+    String kotaKtp = ktpCityController.text.trim().toLowerCase();
+    String kotaNikah = weddingCityController.text.trim().toLowerCase();
+    bool isNumpangNikahResult = (kotaKtp != kotaNikah);
+
     // Ubah status tombol jadi loading
     isLoading.value = true;
 
     try {
-      // 2. Tembak RESTful API Flask MENGGUNAKAN API CONFIG (Sangat Rapi!)
+      // 2. Tembak RESTful API Flask MENGGUNAKAN API CONFIG
       final response = await http.post(
-        Uri.parse(ApiConfig.register), // <--- Cukup panggil ApiConfig.register di sini
+        Uri.parse(ApiConfig.register), 
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "name": nameController.text.trim(),
@@ -72,6 +82,12 @@ class RegisterController extends GetxController {
           "gender": selectedJenisKelamin.value,
           "religion": selectedAgama.value,
           "phone": phoneController.text.trim(),
+          
+          // Kirim juga parameter hukum ke Backend Flask kamu
+          "ktp_city": ktpCityController.text.trim(),
+          "wedding_city": weddingCityController.text.trim(),
+          "is_out_of_town": isNumpangNikahResult,
+          "is_foreigner": isPartnerForeigner.value,
         }),
       );
 
@@ -79,13 +95,23 @@ class RegisterController extends GetxController {
 
       // 3. Cek respon status dari Flask
       if (response.statusCode == 201) {
-        // Jika sukses masuk database MySQL, langsung bersihkan form input data
+        
+        // --- SIMPAN HASIL KALKULASI KE LACI HP (SharedPreferences) ---
+        // Ini krusial agar saat user masuk ke To-Do List, urutan dokumennya langsung akurat!
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_religion', selectedAgama.value);
+        await prefs.setString('user_gender', selectedJenisKelamin.value);
+        await prefs.setBool('is_out_of_town', isNumpangNikahResult);
+        await prefs.setBool('is_foreigner', isPartnerForeigner.value);
+
+        // Bersihkan form input data
         nameController.clear();
         emailController.clear();
         passwordController.clear();
-        selectedJenisKelamin.value = '';
-        selectedAgama.value = '';
         phoneController.clear();
+        ktpCityController.clear();
+        weddingCityController.clear();
+        isPartnerForeigner.value = false;
 
         Get.snackbar(
           "Sukses", 
@@ -96,10 +122,8 @@ class RegisterController extends GetxController {
         
         // Jeda 1.5 detik agar snackbar terbaca, lalu pindah ke Login + Munculkan Dialog Verifikasi
         Future.delayed(const Duration(milliseconds: 1500), () {
-          // Pindah ke halaman login dan hapus tumpukan history pendaftaran
           Get.offAllNamed('/login'); 
           
-          // Memunculkan Pop-up Dialog elegan bertema Simpul (Hijau #596E63) dengan Integrasi Gmail
           Get.dialog(
             AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -118,7 +142,6 @@ class RegisterController extends GetxController {
                 style: TextStyle(height: 1.5, color: Color(0xFF666666), fontSize: 14),
               ),
               actions: [
-                // Pilihan 1: Tutup dialog saja
                 TextButton(
                   onPressed: () => Get.back(),
                   child: const Text(
@@ -126,7 +149,6 @@ class RegisterController extends GetxController {
                     style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)
                   ),
                 ),
-                // Pilihan 2: Langsung mental ke Gmail browser/aplikasi
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF596E63),
@@ -134,10 +156,9 @@ class RegisterController extends GetxController {
                     elevation: 0,
                   ),
                   onPressed: () async {
-                    Get.back(); // Tutup dialog terlebih dahulu
+                    Get.back(); 
                     
                     final Uri gmailUrl = Uri.parse('https://mail.google.com');
-                    // Membuka Gmail secara eksternal (Tab Baru di Web / Aplikasi Gmail di HP)
                     if (!await launchUrl(gmailUrl, mode: LaunchMode.externalApplication)) {
                       Get.snackbar(
                         "Gagal", 
@@ -153,12 +174,11 @@ class RegisterController extends GetxController {
                 ),
               ],
             ),
-            barrierDismissible: false, // User wajib klik tombol agar pop-up menutup
+            barrierDismissible: false, 
           );
         });
         
       } else {
-        // Jika gagal karena aturan bisnis backend (contoh: email sudah dipakai)
         Get.snackbar(
           "Gagal", 
           data['message'] ?? "Terjadi kesalahan pada sistem.",
@@ -167,14 +187,12 @@ class RegisterController extends GetxController {
         );
       }
     } catch (e) {
-      // Jika server Flask mati atau device beda jaringan WiFi
       Get.snackbar(
         "Koneksi Gagal", 
         "Tidak dapat terhubung ke server. Pastikan server aktif dan IP address benar.",
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
-      // Matikan animasi loading tombol setelah semua proses selesai
       isLoading.value = false; 
     }
   }
@@ -185,11 +203,6 @@ class RegisterController extends GetxController {
 
   @override
   void onClose() {
-    // Bersihkan memori controller saat halaman dihancurkan untuk mencegah memory leak
-    // nameController.dispose();
-    // emailController.dispose();
-    // passwordController.dispose(); 
-    // phoneController.clear();
     super.onClose();
   }
 }

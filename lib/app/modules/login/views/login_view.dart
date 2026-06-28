@@ -8,7 +8,7 @@ class LoginView extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
     // Menggunakan GetView membuat variabel 'controller' otomatis tersedia tanpa Get.put()
-    
+
     const Color primaryGreen = Color(0xFF596E63);
     const Color bgColor = Color(0xFFF5F6F8);
     const Color textDark = Color(0xFF1A1A1A);
@@ -21,7 +21,10 @@ class LoginView extends GetView<LoginController> {
         child: Center(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 20.0,
+              ),
               child: Container(
                 padding: const EdgeInsets.all(32.0),
                 decoration: BoxDecoration(
@@ -96,81 +99,100 @@ class LoginView extends GetView<LoginController> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    
+
                     // Input Password (dengan Obx untuk tombol mata)
-                    Obx(() => TextFormField(
-                      controller: controller.passwordController,
-                      obscureText: controller.isPasswordHidden.value,
-                      decoration: InputDecoration(
-                        hintText: '••••••••',
-                        hintStyle: const TextStyle(color: textGrey, fontSize: 15),
-                        prefixIcon: const Icon(Icons.lock_outline, color: textGrey),
-                        // Tombol Mata (Show/Hide)
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            controller.isPasswordHidden.value 
-                                ? Icons.visibility_off_outlined 
-                                : Icons.visibility_outlined,
+                    Obx(
+                      () => TextFormField(
+                        controller: controller.passwordController,
+                        obscureText: controller.isPasswordHidden.value,
+                        decoration: InputDecoration(
+                          hintText: '••••••••',
+                          hintStyle: const TextStyle(
+                            color: textGrey,
+                            fontSize: 15,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.lock_outline,
                             color: textGrey,
                           ),
-                          onPressed: () => controller.togglePasswordVisibility(),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: borderGrey),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: primaryGreen),
+                          // Tombol Mata (Show/Hide)
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              controller.isPasswordHidden.value
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: textGrey,
+                            ),
+                            onPressed: () =>
+                                controller.togglePasswordVisibility(),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: borderGrey),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: primaryGreen),
+                          ),
                         ),
                       ),
-                    )),
+                    ),
                     const SizedBox(height: 32),
 
-                    // TOMBOL LOG IN (SUDAH MENDUKUNG ANIMASI LOADING & ANTI-SPAM CLICK)
-                    Obx(() => SizedBox(
-                          height: 56,
-                          child: ElevatedButton(
-                            // Ketika loading, onPressed bernilai null (tombol otomatis beku/disabled)
-                            onPressed: controller.isLoading.value 
-                                ? null 
-                                : () => controller.login(),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: controller.isLoading.value 
-                                  ? primaryGreen.withOpacity(0.6) 
-                                  : primaryGreen,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
+                    Obx(
+                      () => SizedBox(
+                        height: 56,
+                        child: ElevatedButton(
+                          // Ketika loading, onPressed bernilai null (tombol otomatis beku/disabled)
+                          onPressed: controller.isLoading.value
+                              ? null
+                              : () => controller.login(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: controller.isLoading.value
+                                ? primaryGreen.withValues(
+                                    alpha: 0.6,
+                                  ) // Penulisan modern anti-warning
+                                : primaryGreen,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            child: controller.isLoading.value
-                                ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2.5,
-                                    ),
-                                  )
-                                : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Text(
-                                        'Log In to Simpul',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      SizedBox(width: 8),
-                                      Icon(Icons.arrow_forward, color: Colors.white, size: 20),
-                                    ],
-                                  ),
+                            elevation: 0,
                           ),
-                        )),
+                          child: controller.isLoading.value
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : const Row(
+                                  // Kata kunci const dipindahkan ke sini
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Log In to Simpul',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Icon(
+                                      Icons.arrow_forward,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                    ), 
                     const SizedBox(height: 32),
 
                     // Garis Pemisah (Divider)
@@ -181,7 +203,10 @@ class LoginView extends GetView<LoginController> {
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
                             'or continue with',
-                            style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                         const Expanded(child: Divider(color: borderGrey)),
@@ -316,7 +341,7 @@ class LoginView extends GetView<LoginController> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.redAccent, 
+            color: Colors.redAccent,
           ),
         ),
       ),

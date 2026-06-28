@@ -22,6 +22,11 @@ abstract class Routes {
   static const FORGOT_PASSWORD = _Paths.FORGOT_PASSWORD;
   static const ARTICLE_DETAIL = _Paths.ARTICLE_DETAIL;
   static const BOOKMARK = _Paths.BOOKMARK;
+  static const FAVORITE_VENDOR = _Paths.FAVORITE_VENDOR;
+  static const CHANGEPASSWORD = _Paths.CHANGEPASSWORD;
+  static const ABOUT = _Paths.ABOUT;
+  static const LEGAL_DETAIL_VIEW = _Paths.LEGAL_DETAIL_VIEW;
+  static const LEGAL_DETAIL = _Paths.LEGAL_DETAIL;
 }
 
 abstract class _Paths {
@@ -45,4 +50,9 @@ abstract class _Paths {
   static const FORGOT_PASSWORD = '/forgot-password';
   static const ARTICLE_DETAIL = '/article-detail';
   static const BOOKMARK = '/bookmark';
+  static const FAVORITE_VENDOR = '/favorite-vendor';
+  static const CHANGEPASSWORD = '/changepassword';
+  static const ABOUT = '/about';
+  static const LEGAL_DETAIL_VIEW = '/legal-detail-view';
+  static const LEGAL_DETAIL = '/legal-detail';
 }

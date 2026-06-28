@@ -13,6 +13,7 @@ class EdukasiView extends GetView<EdukasiController> {
 
   // Inisialisasi BookmarkController untuk fitur simpan artikel
   final BookmarkController bookmarkC = Get.put(BookmarkController());
+  static const Color primaryGreen = Color(0xFF596E63);
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +22,15 @@ class EdukasiView extends GetView<EdukasiController> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Simpul', style: TextStyle(fontFamily: 'Serif', color: Colors.green, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
+        title: const Text(
+          'Simpul',
+          style: TextStyle(
+            color: primaryGreen,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
         centerTitle: true,
         actions: [
           IconButton(

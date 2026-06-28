@@ -42,7 +42,7 @@ class LoginController extends GetxController {
       Get.snackbar(
         "Peringatan", 
         "Email dan Kata Sandi wajib diisi!",
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.redAccent.withOpacity(0.1),
       );
       return;
@@ -73,7 +73,7 @@ class LoginController extends GetxController {
         Get.snackbar(
           "Sukses", 
           "Selamat datang kembali di Simpul!",
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green.withOpacity(0.1),
         );
 
@@ -85,7 +85,7 @@ class LoginController extends GetxController {
         Get.snackbar(
           "Akun Belum Aktif", 
           data['message'] ?? "Silakan lakukan verifikasi email terlebih dahulu!",
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.orange.withOpacity(0.1),
           duration: const Duration(seconds: 4),
         );
@@ -93,7 +93,7 @@ class LoginController extends GetxController {
         Get.snackbar(
           "Gagal Masuk", 
           data['message'] ?? "Email atau kata sandi salah.",
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.redAccent.withOpacity(0.1),
         );
       }
@@ -101,7 +101,7 @@ class LoginController extends GetxController {
       Get.snackbar(
         "Koneksi Gagal", 
         "Tidak dapat terhubung ke pelayan server. Pastikan IP Address benar.",
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
       );
     } finally {
       isLoading.value = false; 
@@ -121,12 +121,11 @@ class LoginController extends GetxController {
       try {
         googleUser = await _googleSignIn.authenticate();
       } catch (e) {
-        // Ini akan menangkap aksi ketika pengguna menutup pop-up akun Google
-        print("🚨 ERROR GOOGLE SIGN-IN LOKAL: $e");
+
         Get.snackbar(
           "Google Sign-In Gagal", 
           "Pesan dari Google: $e",
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.redAccent.withOpacity(0.1),
           duration: const Duration(seconds: 5),
         );
@@ -159,7 +158,7 @@ class LoginController extends GetxController {
           Get.snackbar(
             "Sukses", 
             "Berhasil masuk dengan Google!",
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.green.withOpacity(0.1),
           );
 
@@ -169,7 +168,7 @@ class LoginController extends GetxController {
           Get.snackbar(
             "Gagal Masuk", 
             data['message'] ?? "Gagal memverifikasi akun Google.",
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.redAccent.withOpacity(0.1),
           );
         }
@@ -177,7 +176,7 @@ class LoginController extends GetxController {
          Get.snackbar(
           "Gagal", 
           "Sistem tidak dapat mengenali identitas akun Google Anda.",
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.orange.withOpacity(0.1),
         );
       }
@@ -186,7 +185,7 @@ class LoginController extends GetxController {
       Get.snackbar(
         "Kesalahan", 
         "Terjadi masalah saat menghubungi layanan Google.",
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
       );
     } finally {
       isLoading.value = false;
