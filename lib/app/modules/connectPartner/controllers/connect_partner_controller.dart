@@ -1,57 +1,43 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+// controllers/connect_partner_controller.dart
+
 import 'package:get/get.dart';
+import '../../home/controllers/home_controller.dart'; // sesuaikan path
 
 class ConnectPartnerController extends GetxController {
-  final partnerCodeController = TextEditingController();
-  
-  // Mock Kode Unik Pengguna Sendiri
-  var myCode = "SMPL-7892".obs;
+  // ── Ambil HomeController yang sudah ada (sudah di-put saat /home dibuka)
+  // Jika pengguna baru saja register dan belum ke /home, pakai find+put.
+  HomeController get _home => Get.isRegistered<HomeController>()
+      ? Get.find<HomeController>()
+      : Get.put(HomeController());
 
-  void salinKode() {
-    Clipboard.setData(ClipboardData(text: myCode.value));
-    Get.snackbar(
-      'Salin Kode',
-      'Kode unik Kamu berhasil disalin ke papan klip.',
-      backgroundColor: const Color(0xFF596E63),
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
+  // ── Proxy ke HomeController — View cukup akses via sini ──────────────────
 
-  void prosesHubungkan() {
-    String inputCode = partnerCodeController.text.trim();
-    
-    if (inputCode.isEmpty) {
-      Get.snackbar(
-        'Peringatan',
-        'Silakan masukkan kode unik pasangan Kamu terlebih dahulu.',
-        backgroundColor: const Color(0xFFC8847A),
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
+  /// Kode unik milik user saat ini (reaktif, dari backend)
+  RxString get myCode => _home.myUniqueCode;
 
-    // Simulasi Berhasil Sinkronisasi Pasangan
-    Get.offAllNamed('/home', arguments: {'status_sync': true});
-    
-    Get.snackbar(
-      'Berhasil Sinkron',
-      'Akun Kamu telah sukses terhubung dengan pasangan!',
-      backgroundColor: const Color(0xFF596E63),
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
+  /// Status loading saat kirim permintaan
+  RxBool get isLoading => _home.isPairActionLoading;
 
-  void lewatiSementara() {
-    Get.offAllNamed('/home', arguments: {'status_sync': false});
-  }
+  /// TextEditingController input kode pasangan
+  get partnerCodeController => _home.pairInputController;
+
+  // ── Actions ───────────────────────────────────────────────────────────────
+
+  /// Salin kode unik ke clipboard
+  void salinKode() => _home.copyMyCode();
+
+  /// Kirim permintaan hubungkan ke backend
+  Future<void> prosesHubungkan() => _home.submitPairRequest();
+
+  /// Lewati — langsung ke beranda tanpa sinkronisasi
+  void lewatiSementara() => Get.offAllNamed('/home');
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   @override
-  void onClose() {
-    partnerCodeController.dispose();
-    super.onClose();
+  void onInit() {
+    super.onInit();
+
   }
+
 }

@@ -589,6 +589,7 @@ class _UnsyncedCard extends StatelessWidget {
   }
 }
 
+// BARU: kartu pending sekarang punya tombol "Batalkan Permintaan"
 class _PendingCard extends StatelessWidget {
   const _PendingCard({required this.controller});
   final HomeController controller;
@@ -602,47 +603,84 @@ class _PendingCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _cMist, width: 1.5),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: const BoxDecoration(
-              color: _cFog,
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  color: _cForestMid,
-                  strokeWidth: 2,
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  color: _cFog,
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: _cForestMid,
+                      strokeWidth: 2,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Menunggu konfirmasi',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _cInk,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Obx(
+                      () => Text(
+                        'Permintaan dikirim ke ${controller.partnerName.value.isNotEmpty ? controller.partnerName.value : "pasanganmu"}.',
+                        style: const TextStyle(fontSize: 11, color: _cSubtext),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Menunggu konfirmasi',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: _cInk,
-                  ),
+          const SizedBox(height: 14),
+          Obx(
+            () => SizedBox(
+              height: 40,
+              width: double.infinity,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFF0F0F0), width: 1.5),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                const SizedBox(height: 3),
-                Obx(
-                  () => Text(
-                    'Permintaan dikirim ke ${controller.partnerName.value.isNotEmpty ? controller.partnerName.value : "pasanganmu"}.',
-                    style: const TextStyle(fontSize: 11, color: _cSubtext),
-                  ),
-                ),
-              ],
+                onPressed: controller.isPairActionLoading.value
+                    ? null
+                    : controller.cancelPairRequest,
+                child: controller.isPairActionLoading.value
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            color: _cForestMid, strokeWidth: 2),
+                      )
+                    : const Text(
+                        'Batalkan Permintaan',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
             ),
           ),
         ],
@@ -651,6 +689,8 @@ class _PendingCard extends StatelessWidget {
   }
 }
 
+// BARU: pill "Tersinkron" sekarang bisa ditekan untuk memutus hubungan
+// (dialog konfirmasi sudah ditangani di dalam controller.unlinkPair()).
 class _SyncedCard extends StatelessWidget {
   const _SyncedCard({required this.controller});
   final HomeController controller;
@@ -683,31 +723,37 @@ class _SyncedCard extends StatelessWidget {
           Expanded(
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _cFog,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: _cMist),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.circle, size: 5, color: _cForestMid),
-                      SizedBox(width: 5),
-                      Text(
-                        'Tersinkron',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: _cForestMid,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.3,
+                GestureDetector(
+                  onTap: controller.unlinkPair,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _cFog,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: _cMist),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.circle, size: 5, color: _cForestMid),
+                        SizedBox(width: 5),
+                        Text(
+                          'Tersinkron',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: _cForestMid,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.3,
+                          ),
                         ),
-                      ),
-                    ],
+                        SizedBox(width: 4),
+                        Icon(Icons.link_off_rounded,
+                            size: 11, color: _cForestMid),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1400,9 +1446,10 @@ class _LegalProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final level = controller.currentLegalLevel.value;
-      final doc = controller.currentLegalDoc.value;
+      final level   = controller.currentLegalLevel.value;   // mis. "Kantor Kelurahan / Desa"
+      final doc     = controller.currentLegalDoc.value;     // mis. "Formulir N1 - N4 Kelurahan"
       final percent = controller.legalProgressPercent.value;
+      final isDone  = doc == 'Selesai';
 
       return Container(
         padding: const EdgeInsets.all(20),
@@ -1426,12 +1473,14 @@ class _LegalProgressCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: _cFog,
+                    color: isDone ? const Color(0xFFE8F5E9) : _cFog,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
-                    Icons.description_outlined,
-                    color: _cForestMid,
+                  child: Icon(
+                    isDone
+                        ? Icons.check_circle_outline_rounded
+                        : Icons.description_outlined,
+                    color: isDone ? const Color(0xFF2E7D32) : _cForestMid,
                     size: 22,
                   ),
                 ),
@@ -1441,7 +1490,7 @@ class _LegalProgressCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Tahap Dokumen Saat Ini',
+                        'Tahap Legal Saat Ini',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
@@ -1450,7 +1499,7 @@ class _LegalProgressCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        level.isNotEmpty ? 'Level $level' : 'Belum ada data',
+                        level.isNotEmpty ? level : 'Belum ada data',
                         style: const TextStyle(fontSize: 11, color: _cSubtext),
                       ),
                     ],
@@ -1458,10 +1507,10 @@ class _LegalProgressCard extends StatelessWidget {
                 ),
                 Text(
                   '$percent%',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: _cSubtext,
+                    color: isDone ? const Color(0xFF2E7D32) : _cSubtext,
                   ),
                 ),
               ],
@@ -1470,104 +1519,67 @@ class _LegalProgressCard extends StatelessWidget {
 
             if (doc.isNotEmpty)
               Container(
+                width: double.infinity,
                 margin: const EdgeInsets.only(bottom: 14),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
-                  vertical: 6,
+                  vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: _cGoldLight,
+                  color: isDone ? const Color(0xFFE8F5E9) : _cGoldLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.circle, size: 6, color: _cGold),
+                    Icon(
+                      Icons.circle,
+                      size: 6,
+                      color: isDone ? const Color(0xFF2E7D32) : _cGold,
+                    ),
                     const SizedBox(width: 6),
-                    Text(
-                      level.isNotEmpty
-                          ? 'Level $level — Dokumen $doc'
-                          : 'Dokumen $doc',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF966C23),
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Text(
+                        doc,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDone
+                              ? const Color(0xFF2E7D32)
+                              : const Color(0xFF966C23),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
               ),
 
-            _StageProgressBar(currentDoc: doc),
+            // Progress bar linear tunggal — menggantikan 4 kotak N1–N4
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: percent / 100,
+                minHeight: 8,
+                backgroundColor: _cBorder,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  isDone ? const Color(0xFF4CAF50) : _cGold,
+                ),
+              ),
+            ),
             const SizedBox(height: 8),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _stageLabel('N1', doc),
-                _stageLabel('N2', doc),
-                _stageLabel('N3', doc),
-                _stageLabel('N4', doc),
-              ],
+            Text(
+              isDone
+                  ? 'Semua tahap administrasi legal telah selesai 🎉'
+                  : 'Selesaikan tahap ini di halaman To Do untuk lanjut ke tahap berikutnya.',
+              style: const TextStyle(fontSize: 10, color: _cSubtext, height: 1.4),
             ),
           ],
         ),
       );
     });
   }
-
-  Widget _stageLabel(String stage, String currentDoc) {
-    final isActive = currentDoc == stage;
-    return Text(
-      stage,
-      style: TextStyle(
-        fontSize: 10,
-        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-        color: isActive ? _cGold : _cSubtext,
-      ),
-    );
-  }
 }
 
-class _StageProgressBar extends StatelessWidget {
-  const _StageProgressBar({required this.currentDoc});
-  final String currentDoc;
-
-  static const stages = ['N1', 'N2', 'N3', 'N4'];
-
-  Color _color(String stage) {
-    final idx = stages.indexOf(stage);
-    final cur = stages.indexOf(currentDoc);
-    if (cur < 0) return _cBorder;
-    if (idx < cur) return _cForestMid;
-    if (idx == cur) return _cGold;
-    return _cBorder;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: stages.asMap().entries.map((e) {
-        return Expanded(
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: _color(e.value),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-              if (e.key < stages.length - 1) const SizedBox(width: 4),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
 
 // ─── Bottom Nav ───────────────────────────────────────────────────────────────
 

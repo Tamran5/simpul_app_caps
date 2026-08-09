@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/profile_controller.dart';
+import '../../../shared/widgets/simpul_app_bar.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({Key? key}) : super(key: key);
@@ -10,14 +11,10 @@ class ProfileView extends GetView<ProfileController> {
   static const _cMist      = Color(0xFFB8CFC9);
   static const _cFog       = Color(0xFFEBF2F0);
   static const _cGold      = Color(0xFFC8A96A);
-  static const _cGoldLight = Color(0xFFF7F3EB);
   static const _cBg        = Color(0xFFF5F6F5);
-  static const _cSurface   = Colors.white;
   static const _cInk       = Color(0xFF111827);
   static const _cSubtext   = Color(0xFF6B7280);
   static const _cBorder    = Color(0xFFEEEEEE);
-  static const _cDanger    = Color(0xFFDC2626);
-  static const _cDangerBg  = Color(0xFFFEF2F2);
 
   @override
   Widget build(BuildContext context) {
@@ -37,40 +34,12 @@ class ProfileView extends GetView<ProfileController> {
             physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics()),
             slivers: [
-              SliverAppBar(
-                backgroundColor: _cBg,
-                elevation: 0,
-                floating: true,
-                centerTitle: true,
-                automaticallyImplyLeading: false,
-                title: RichText(
-                  text: const TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Simpul',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          fontStyle: FontStyle.italic,
-                          color: _cForest,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      TextSpan(
-                        text: '.',
-                        style: TextStyle(
-                            fontSize: 26,
-                            color: _cGold,
-                            fontWeight: FontWeight.w900),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // ── Shared AppBar ──────────────────────────────────────────
+              const SliverSimpulAppBar(),
 
+              // ── Content ────────────────────────────────────────────────
               SliverPadding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     _ProfileHero(controller: controller),
@@ -79,9 +48,7 @@ class ProfileView extends GetView<ProfileController> {
                     Obx(() => controller.isSynced.value
                         ? Column(
                             children: [
-                              _WeddingInfoCard(
-                                  controller: controller,
-                                  context: context),
+                              _WeddingInfoCard(controller: controller),
                               const SizedBox(height: 24),
                             ],
                           )
@@ -166,14 +133,13 @@ class _ProfileHero extends StatelessWidget {
         border: Border.all(color: _cBorder, width: 1.5),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 12,
               offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
         children: [
-          // Avatar — TANPA icon kamera (ganti foto hanya via Edit Profil)
           Obx(() {
             final url = controller.userPhotoUrl.value;
             return CircleAvatar(
@@ -196,9 +162,7 @@ class _ProfileHero extends StatelessWidget {
           Obx(() => Text(
                 controller.userName.value,
                 style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: _cInk),
+                    fontSize: 18, fontWeight: FontWeight.bold, color: _cInk),
               )),
           const SizedBox(height: 4),
           Obx(() => Text(
@@ -218,12 +182,14 @@ class _ProfileHero extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: _cFog,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _cForestMid.withOpacity(0.2)),
+                  border: Border.all(
+                      color: _cForestMid.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.tag_rounded, size: 14, color: _cForestMid),
+                    const Icon(Icons.tag_rounded,
+                        size: 14, color: _cForestMid),
                     const SizedBox(width: 6),
                     Text(
                       code,
@@ -238,7 +204,7 @@ class _ProfileHero extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: _cGold.withOpacity(0.15),
+                        color: _cGold.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text('Salin',
@@ -269,9 +235,8 @@ class _ProfileHero extends StatelessWidget {
 // ─── Wedding Info Card ────────────────────────────────────────────────────────
 
 class _WeddingInfoCard extends StatelessWidget {
-  const _WeddingInfoCard({required this.controller, required this.context});
+  const _WeddingInfoCard({required this.controller});
   final ProfileController controller;
-  final BuildContext context;
 
   static const _cMist = Color(0xFFB8CFC9);
 
@@ -287,7 +252,7 @@ class _WeddingInfoCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-              color: const Color(0xFF2D5A4E).withOpacity(0.3),
+              color: const Color(0xFF2D5A4E).withValues(alpha: 0.3),
               blurRadius: 16,
               offset: const Offset(0, 6)),
         ],
@@ -307,6 +272,7 @@ class _WeddingInfoCard extends StatelessWidget {
 
             Row(
               children: [
+                // Pasangan
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,6 +299,7 @@ class _WeddingInfoCard extends StatelessWidget {
                 Container(width: 1, height: 36, color: Colors.white24),
                 const SizedBox(width: 16),
 
+                // Tanggal
                 Expanded(
                   child: GestureDetector(
                     onTap: () => controller.aturJadwalNikah(context),
@@ -352,14 +319,22 @@ class _WeddingInfoCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 4),
+                        // FIX: weddingDate.value → weddingDateRx.value
+                        // weddingDate sekarang getter String biasa (non-reaktif),
+                        // sedangkan weddingDateRx adalah RxString yang mengarah
+                        // langsung ke HomeController.weddingDateStr (source of
+                        // truth). Obx() WAJIB membaca RxString supaya tahu kapan
+                        // harus rebuild — kalau masih pakai weddingDate.value di
+                        // sini, kartu ini tidak akan ikut update otomatis saat
+                        // tanggal diubah dari tab Home.
                         Obx(() => Text(
-                              controller.weddingDate.value.isNotEmpty
-                                  ? controller.weddingDate.value
+                              controller.weddingDateRx.value.isNotEmpty
+                                  ? controller.weddingDateRx.value
                                   : 'Atur tanggal',
                               style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: controller.weddingDate.value.isNotEmpty
+                                  color: controller.weddingDateRx.value.isNotEmpty
                                       ? Colors.white
                                       : const Color(0xFFC8A96A)),
                             )),
@@ -374,29 +349,24 @@ class _WeddingInfoCard extends StatelessWidget {
             Container(height: 1, color: Colors.white10),
             const SizedBox(height: 14),
 
-            Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.circle, size: 5, color: _cMist),
-                      SizedBox(width: 5),
-                      Text('Akun Tersinkron',
-                          style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ),
-              ],
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.circle, size: 5, color: _cMist),
+                  SizedBox(width: 5),
+                  Text('Akun Tersinkron',
+                      style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600)),
+                ],
+              ),
             ),
           ],
         ),
@@ -414,7 +384,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 0),
+      padding: const EdgeInsets.only(left: 4),
       child: Text(
         text,
         style: const TextStyle(
@@ -442,14 +412,14 @@ class _SettingsGroup extends StatelessWidget {
         border: Border.all(color: const Color(0xFFEEEEEE), width: 1.5),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.025),
+              color: Colors.black.withValues(alpha: 0.025),
               blurRadius: 8,
               offset: const Offset(0, 2)),
         ],
       ),
       child: Column(
         children: items.asMap().entries.map((entry) {
-          final i = entry.key;
+          final i    = entry.key;
           final tile = entry.value;
           return Column(
             children: [
@@ -477,15 +447,15 @@ class _SettingTile extends StatelessWidget {
     required this.subtitle,
     required this.onTap,
     this.iconColor = const Color(0xFF3D6B5F),
-    this.iconBg = const Color(0xFFEBF2F0),
+    this.iconBg    = const Color(0xFFEBF2F0),
   });
 
-  final IconData icon;
-  final String label;
-  final String subtitle;
-  final VoidCallback onTap;
-  final Color iconColor;
-  final Color iconBg;
+  final IconData       icon;
+  final String         label;
+  final String         subtitle;
+  final VoidCallback   onTap;
+  final Color          iconColor;
+  final Color          iconBg;
 
   @override
   Widget build(BuildContext context) {
@@ -500,7 +470,8 @@ class _SettingTile extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                  color: iconBg, borderRadius: BorderRadius.circular(12)),
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: iconColor, size: 20),
             ),
             const SizedBox(width: 14),

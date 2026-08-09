@@ -221,6 +221,21 @@ class LoginView extends GetView<LoginController> {
                       onPressed: () => controller.loginWithGoogle(),
                       borderColor: borderGrey,
                     ),
+                    const SizedBox(height: 16),
+
+                    // Tombol Face Recognition — opsi login mandiri, sejajar
+                    // dengan email/password dan Google (bukan lagi langkah
+                    // verifikasi tambahan setelah login).
+                    _buildSocialButton(
+                      text: 'Face Recognition',
+                      iconWidget: const Icon(
+                        Icons.face_retouching_natural,
+                        color: primaryGreen,
+                        size: 22,
+                      ),
+                      onPressed: () => controller.loginWithFace(),
+                      borderColor: borderGrey,
+                    ),
                     const SizedBox(height: 40),
 
                     // Teks Footer (Create account)

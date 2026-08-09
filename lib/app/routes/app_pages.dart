@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 
 import '../../data/models/article_model.dart';
+import '../modules/RegisterOtp/bindings/register_otp_binding.dart';
+import '../modules/RegisterOtp/views/register_otp_view.dart';
 import '../modules/about/bindings/about_binding.dart';
 import '../modules/about/views/about_view.dart';
 import '../modules/article_detail/bindings/article_detail_binding.dart';
@@ -153,6 +155,11 @@ class AppPages {
       name: _Paths.ABOUT,
       page: () => const AboutView(),
       binding: AboutBinding(),
+    ),
+    GetPage(
+      name: _Paths.REGISTER_OTP,
+      page: () => const RegisterOtpView(),
+      binding: RegisterOtpBinding(),
     ),
   ];
 }

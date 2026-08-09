@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/todo_controller.dart';
+import '../../../shared/widgets/simpul_app_bar.dart';
 
 class TodoView extends StatelessWidget {
   const TodoView({Key? key}) : super(key: key);
@@ -18,21 +19,7 @@ class TodoView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Simpul',
-          style: TextStyle(
-            color: primaryGreen,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            fontStyle: FontStyle.italic,
-          ),
-        ),
-      ),
+      appBar: const SimpulAppBar(),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const _JourneySkeleton();
@@ -721,6 +708,8 @@ class _JourneyStepCard extends StatelessWidget {
 
 // ─── Document Upload Section ─────────────────────────────────────────────────
 
+// ─── Document Upload Section ─────────────────────────────────────────────────
+
 class _DocumentSection extends StatelessWidget {
   const _DocumentSection({required this.step, required this.isLocked, required this.controller});
   final JourneyStep step;
@@ -733,6 +722,7 @@ class _DocumentSection extends StatelessWidget {
       final status = step.documentStatus.value;
       final isUploaded = status != 'empty';
       final isUploading = step.isUploading.value;
+      final isOpening = controller.isOpeningDocument.value;
 
       return Container(
         decoration: BoxDecoration(
@@ -829,6 +819,25 @@ class _DocumentSection extends StatelessWidget {
                       ],
                     ),
                   ),
+                  // ── BARU: tombol lihat dokumen ──
+                  GestureDetector(
+                    onTap: isOpening ? null : () => controller.viewDocument(step),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      margin: const EdgeInsets.only(right: 6),
+                      decoration: BoxDecoration(
+                        color: TodoView.primaryGreen.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: isOpening
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: TodoView.primaryGreen),
+                            )
+                          : const Icon(Icons.visibility_outlined, size: 16, color: TodoView.primaryGreen),
+                    ),
+                  ),
                   GestureDetector(
                     onTap: () => controller.uploadDocument(step),
                     child: Container(
@@ -849,7 +858,6 @@ class _DocumentSection extends StatelessWidget {
     });
   }
 }
-
 // ─── Skeleton Loading ─────────────────────────────────────────────────────────
 
 class _JourneySkeleton extends StatelessWidget {

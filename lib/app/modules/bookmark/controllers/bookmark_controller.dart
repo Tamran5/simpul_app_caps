@@ -54,7 +54,7 @@ class BookmarkController extends GetxController {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('access_token');
 
-      var url = Uri.parse('${ApiConfig.toggleBookmark}/$articleId/bookmark');
+      var url = Uri.parse(ApiConfig.toggleBookmark(articleId.toString()));
 
       var response = await http.post(
         url,

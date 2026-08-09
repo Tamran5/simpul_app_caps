@@ -1,3 +1,5 @@
+// lib/app/modules/edukasi/views/edukasi_view.dart
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -6,188 +8,233 @@ import '../controllers/edukasi_controller.dart';
 import '../../bookmark/controllers/bookmark_controller.dart';
 import '../../../../data/models/article_model.dart';
 import '../../article_detail/views/article_detail_view.dart';
-
+import '../../../shared/widgets/simpul_app_bar.dart'; // sesuaikan path
 
 class EdukasiView extends GetView<EdukasiController> {
-  EdukasiView({Key? key}) : super(key: key);
+  EdukasiView({super.key});
 
-  // Inisialisasi BookmarkController untuk fitur simpan artikel
-  final BookmarkController bookmarkC = Get.put(BookmarkController());
-  static const Color primaryGreen = Color(0xFF596E63);
+  final BookmarkController _bookmarkC = Get.put(BookmarkController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          'Simpul',
-          style: TextStyle(
-            color: primaryGreen,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            fontStyle: FontStyle.italic,
-          ),
-        ),
-        centerTitle: true,
+      backgroundColor: kBg,
+      appBar: SimpulAppBar(
         actions: [
-          IconButton(
-            icon: const Icon(Icons.bookmark_border, color: Colors.black87),
-            onPressed: () {
-              // Navigasi ke halaman Bookmark (Sesuaikan nama rute jika berbeda di app_pages.dart)
-              Get.toNamed('/bookmark');
-            },
-          )
+          _IconBtn(
+            icon: Icons.bookmark_outline_rounded,
+            onTap: () => Get.toNamed('/bookmark'),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: Colors.green));
+          return const Center(
+            child: CircularProgressIndicator(color: kForestMid, strokeWidth: 2),
+          );
         }
 
         return RefreshIndicator(
-          color: Colors.green,
+          color: kForestMid,
           onRefresh: () async => controller.fetchArticles(),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Pusat Edukasi', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, fontFamily: 'Serif')),
-                  const SizedBox(height: 16),
-                  
-                  // --- Kategori Filter (Chips) ---
-                  SizedBox(
-                    height: 35,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: controller.categories.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        String category = controller.categories[index];
-                        bool isSelected = controller.selectedCategory.value == category;
-                        return GestureDetector(
-                          onTap: () => controller.changeCategory(category),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: isSelected ? Colors.green[800] : Colors.white,
-                              border: Border.all(color: isSelected ? Colors.transparent : Colors.grey[300]!),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              category,
-                              style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? Colors.white : Colors.black87),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Jika tidak ada artikel setelah difilter
-                  if (controller.filteredArticles.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 50),
-                      child: Center(child: Text('Tidak ada artikel di kategori ini.', style: TextStyle(color: Colors.grey))),
-                    )
-                  else ...[
-                    // --- Artikel Utama (Bacaan Pilihan) ---
-                    const Text('Bacaan Pilihan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    _buildFeaturedArticle(controller.featuredArticle!),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // --- Artikel Lainnya ---
-                    if (controller.otherArticles.isNotEmpty) ...[
-                      const Text('Artikel Lainnya', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 12),
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: controller.otherArticles.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          return _buildListArticle(controller.otherArticles[index]);
-                        },
-                      ),
-                    ]
-                  ],
-                  const SizedBox(height: 30), // Padding bawah
-                ],
-              ),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
             ),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Page title ──────────────────────────────────────
+                      const Text(
+                        'Pusat Edukasi',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: kInk,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Panduan & artikel pernikahan untukmu',
+                        style: TextStyle(fontSize: 13, color: kSubtext),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ── Category chips ──────────────────────────────────
+                      _CategoryChips(controller: controller),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── Konten artikel ─────────────────────────────────────────
+              Obx(() {
+                if (controller.filteredArticles.isEmpty) {
+                  return SliverFillRemaining(
+                    child: _EmptyState(),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      // Artikel utama
+                      _SectionTitle('Bacaan Pilihan'),
+                      const SizedBox(height: 12),
+                      _FeaturedCard(
+                        article: controller.featuredArticle!,
+                        bookmarkC: _bookmarkC,
+                      ),
+                      const SizedBox(height: 28),
+
+                      // Artikel lainnya
+                      if (controller.otherArticles.isNotEmpty) ...[
+                        _SectionTitle('Artikel Lainnya'),
+                        const SizedBox(height: 12),
+                        ...controller.otherArticles.map(
+                          (a) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _ListCard(article: a, bookmarkC: _bookmarkC),
+                          ),
+                        ),
+                      ],
+                    ]),
+                  ),
+                );
+              }),
+            ],
           ),
         );
       }),
     );
   }
+}
 
-  // Komponen Card Besar
-  Widget _buildFeaturedArticle(Article article) {
+// ── Category chips ────────────────────────────────────────────────────────────
+
+class _CategoryChips extends StatelessWidget {
+  const _CategoryChips({required this.controller});
+  final EdukasiController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: controller.categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final cat = controller.categories[i];
+          return Obx(() {
+            final isSelected = controller.selectedCategory.value == cat;
+            return GestureDetector(
+              onTap: () => controller.changeCategory(cat),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isSelected ? kForestMid : kSurface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? kForestMid : kBorder,
+                    width: 1.5,
+                  ),
+                ),
+                child: Text(
+                  cat,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? Colors.white : kSubtext,
+                  ),
+                ),
+              ),
+            );
+          });
+        },
+      ),
+    );
+  }
+}
+
+// ── Section title ─────────────────────────────────────────────────────────────
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: kInk,
+      ),
+    );
+  }
+}
+
+// ── Featured article card (besar) ────────────────────────────────────────────
+
+class _FeaturedCard extends StatelessWidget {
+  const _FeaturedCard({required this.article, required this.bookmarkC});
+  final Article article;
+  final BookmarkController bookmarkC;
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => Get.to(() => ArticleDetailView(article: article)),
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[200]!),
+          color: kSurface,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: kBorder, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Gambar
             Stack(
               children: [
                 Hero(
-                  tag: 'article_image_${article.id}', // Tambahan Hero animasi
+                  tag: 'article_image_${article.id}',
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                    // PENGGUNAAN CACHED NETWORK IMAGE
-                    child: article.imageUrl.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: article.imageUrl,
-                            height: 180,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              height: 180,
-                              color: Colors.grey[100],
-                              child: const Center(child: CircularProgressIndicator(color: Colors.green, strokeWidth: 2)),
-                            ),
-                            errorWidget: (context, url, error) => _fallbackImage(180),
-                          )
-                        : _fallbackImage(180),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(20)),
+                    child: _ArticleImage(
+                        url: article.imageUrl, height: 180),
                   ),
                 ),
+                // Tombol bookmark
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: Container(
-                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                    child: Obx(() {
-                      // Cek apakah artikel ini ada di list bookmark
-                      bool isSaved = bookmarkC.bookmarkedArticles.any((a) => a.id == article.id);
-                      return IconButton(
-                        icon: Icon(
-                          isSaved ? Icons.bookmark : Icons.bookmark_border, 
-                          size: 20, 
-                          color: isSaved ? Colors.green : Colors.black54
-                        ),
-                        onPressed: () => bookmarkC.toggleBookmark(article.id),
-                        constraints: const BoxConstraints(minWidth: 35, minHeight: 35),
-                        padding: EdgeInsets.zero,
-                      );
-                    }),
-                  ),
-                )
+                  child: _BookmarkBtn(
+                      articleId: article.id, bookmarkC: bookmarkC),
+                ),
               ],
             ),
+            // Info
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -196,101 +243,270 @@ class EdukasiView extends GetView<EdukasiController> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(6)),
-                        child: Text(article.kategori.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.green)),
-                      ),
-                      Row(
-                        children: [
-                          const Icon(Icons.schedule, size: 14, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text(article.readTime, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                        ],
-                      )
+                      _CategoryBadge(article.kategori),
+                      _ReadTime(article.readTime),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(article.judul, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 10),
+                  Text(
+                    article.judul,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: kInk,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
     );
   }
+}
 
-  // Komponen Card Kecil
-  Widget _buildListArticle(Article article) {
+// ── List article card (kecil) ─────────────────────────────────────────────────
+
+class _ListCard extends StatelessWidget {
+  const _ListCard({required this.article, required this.bookmarkC});
+  final Article article;
+  final BookmarkController bookmarkC;
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Get.to(() => ArticleDetailView(article: article)), 
+      onTap: () => Get.to(() => ArticleDetailView(article: article)),
       child: Container(
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(border: Border.all(color: Colors.grey[200]!), borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(
+          color: kSurface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: kBorder, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.025),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Row(
           children: [
             Hero(
-              tag: 'article_image_${article.id}', // Tambahan Hero animasi
+              tag: 'article_image_${article.id}',
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                // PENGGUNAAN CACHED NETWORK IMAGE
-                child: article.imageUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: article.imageUrl,
-                        height: 80,
-                        width: 80,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          height: 80, 
-                          width: 80, 
-                          color: Colors.grey[100],
-                          child: const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.green, strokeWidth: 2))),
-                        ),
-                        errorWidget: (context, url, error) => _fallbackImage(80, 80),
-                      )
-                    : _fallbackImage(80, 80),
+                child: _ArticleImage(url: article.imageUrl, height: 80, width: 80),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(article.kategori.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  _CategoryBadge(article.kategori),
                   const SizedBox(height: 6),
-                  Text(article.judul, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, height: 1.2), maxLines: 2, overflow: TextOverflow.ellipsis),
+                  Text(
+                    article.judul,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: kInk,
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('${article.readTime} read', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                      Obx(() {
-                        // Cek apakah artikel ini ada di list bookmark
-                        bool isSaved = bookmarkC.bookmarkedArticles.any((a) => a.id == article.id);
-                        return IconButton(
-                          icon: Icon(
-                            isSaved ? Icons.bookmark : Icons.bookmark_border, 
-                            size: 18, 
-                            color: isSaved ? Colors.green : Colors.grey
-                          ),
-                          onPressed: () => bookmarkC.toggleBookmark(article.id),
-                          constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                          padding: EdgeInsets.zero,
-                        );
-                      }),
+                      _ReadTime(article.readTime),
+                      _BookmarkBtn(
+                          articleId: article.id,
+                          bookmarkC: bookmarkC,
+                          size: 18),
                     ],
-                  )
+                  ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _fallbackImage(double height, [double width = double.infinity]) {
-    return Container(height: height, width: width, color: Colors.grey[200], child: const Icon(Icons.image, color: Colors.grey));
+// ── Reusable sub-widgets ─────────────────────────────────────────────────────
+
+class _ArticleImage extends StatelessWidget {
+  const _ArticleImage({required this.url, required this.height, this.width = double.infinity});
+  final String url;
+  final double height;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    if (url.isEmpty) return _Fallback(height: height, width: width);
+    return CachedNetworkImage(
+      imageUrl: url,
+      height: height,
+      width: width,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => Container(
+        height: height,
+        width: width,
+        color: kFog,
+        child: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(color: kForestMid, strokeWidth: 2),
+          ),
+        ),
+      ),
+      errorWidget: (_, __, ___) => _Fallback(height: height, width: width),
+    );
+  }
+}
+
+class _Fallback extends StatelessWidget {
+  const _Fallback({required this.height, required this.width});
+  final double height;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      width: width,
+      color: kFog,
+      child: const Icon(Icons.image_outlined, color: kMist, size: 28),
+    );
+  }
+}
+
+class _CategoryBadge extends StatelessWidget {
+  const _CategoryBadge(this.category);
+  final String category;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: kFog,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        category.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          color: kForestMid,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+class _ReadTime extends StatelessWidget {
+  const _ReadTime(this.time);
+  final String time;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.schedule_rounded, size: 12, color: kSubtext),
+        const SizedBox(width: 4),
+        Text(time, style: const TextStyle(fontSize: 11, color: kSubtext)),
+      ],
+    );
+  }
+}
+
+class _BookmarkBtn extends StatelessWidget {
+  const _BookmarkBtn({required this.articleId, required this.bookmarkC, this.size = 20});
+  final int articleId;
+  final BookmarkController bookmarkC;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final saved = bookmarkC.bookmarkedArticles.any((a) => a.id == articleId);
+      return GestureDetector(
+        onTap: () => bookmarkC.toggleBookmark(articleId),
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: const BoxDecoration(color: kSurface, shape: BoxShape.circle),
+          child: Icon(
+            saved ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
+            size: size,
+            color: saved ? kForestMid : kSubtext,
+          ),
+        ),
+      );
+    });
+  }
+}
+
+class _IconBtn extends StatelessWidget {
+  const _IconBtn({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: kSurface,
+          shape: BoxShape.circle,
+          border: Border.all(color: kBorder, width: 1.5),
+        ),
+        child: Icon(icon, color: kForestMid, size: 18),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: const BoxDecoration(color: kFog, shape: BoxShape.circle),
+            child: const Icon(Icons.menu_book_outlined, color: kMist, size: 36),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Belum ada artikel',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: kInk),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Tidak ada artikel di kategori ini.',
+            style: TextStyle(fontSize: 12, color: kSubtext),
+          ),
+        ],
+      ),
+    );
   }
 }

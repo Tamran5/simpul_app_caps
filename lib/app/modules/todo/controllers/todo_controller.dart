@@ -1,10 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 import '../../../core/values/api_config.dart';
 
 
@@ -147,6 +151,9 @@ class TodoController extends GetxController {
   double get progressPercent =>
       totalSteps.value == 0 ? 0.0 : doneSteps.value / totalSteps.value;
 
+  // ─── Lihat Dokumen ───────────────────────────────────────────────────
+  var isOpeningDocument = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -211,11 +218,6 @@ class TodoController extends GetxController {
   // ═══════════════════════════════════════════════════════════════════
   // PARTNER VIEW (read-only)
   // ═══════════════════════════════════════════════════════════════════
-  //
-  // Progress tetap dipisah per-individu (bukan digabung jadi satu angka),
-  // karena dokumen legal (KTP, akta, dst.) bersifat personal — pasangan
-  // bisa lihat sejauh mana progres satu sama lain untuk saling mengingatkan,
-  // tapi tidak bisa toggle/upload pada langkah milik pasangan.
 
   void switchViewMode(String mode) {
     viewMode.value = mode;
@@ -247,7 +249,6 @@ class TodoController extends GetxController {
         partnerTotalSteps.value = (data['total_steps'] ?? partnerSteps.length) as int;
         partnerDoneSteps.value = (data['done_steps'] ?? 0) as int;
       } else if (response.statusCode == 400) {
-        // Belum terhubung pasangan — bukan error teknis, hanya state kosong.
         isSynced.value = false;
       } else if (response.statusCode == 401) {
         Get.offAllNamed('/login');
@@ -267,7 +268,7 @@ class TodoController extends GetxController {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // LOCK CHECK (mirror dari backend, untuk responsivitas UI instan)
+  // LOCK CHECK
   // ═══════════════════════════════════════════════════════════════════
 
   bool isStepLocked(JourneyStep step) => step.isLocked.value;
@@ -277,28 +278,27 @@ class TodoController extends GetxController {
   // ═══════════════════════════════════════════════════════════════════
 
   Future<void> toggleStep(JourneyStep step) async {
-  if (step.isLocked.value && !step.isDone.value) {
-    Get.snackbar(
-      'Aksi Ditolak',
-      'Sistem mendeteksi urutan berkas di atasnya belum terpenuhi.',
-      backgroundColor: Colors.redAccent,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
-    );
-    return;
-  }
+    if (step.isLocked.value && !step.isDone.value) {
+      Get.snackbar(
+        'Aksi Ditolak',
+        'Sistem mendeteksi urutan berkas di atasnya belum terpenuhi.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
 
-  // --- TAMBAHAN: cegah tandai selesai tanpa dokumen wajib ---
-  if (step.requiresDocument && !step.isDone.value && step.documentStatus.value == 'empty') {
-    Get.snackbar(
-      'Dokumen Diperlukan',
-      'Unggah dokumen terlebih dahulu untuk menandai langkah ini selesai.',
-      backgroundColor: const Color(0xFFC8A96A),
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
-    );
-    return;
-  }
+    if (step.requiresDocument && !step.isDone.value && step.documentStatus.value == 'empty') {
+      Get.snackbar(
+        'Dokumen Diperlukan',
+        'Unggah dokumen terlebih dahulu untuk menandai langkah ini selesai.',
+        backgroundColor: const Color(0xFFC8A96A),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
 
     // Optimistic update
     final previousValue = step.isDone.value;
@@ -314,7 +314,6 @@ class TodoController extends GetxController {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
-        // Rollback jika backend menolak (misal race condition lock)
         step.isDone.value = previousValue;
         _recountDoneSteps();
         _recalculateLocksLocally();
@@ -328,7 +327,6 @@ class TodoController extends GetxController {
           snackPosition: SnackPosition.TOP,
         );
       } else {
-        // Refresh ringan untuk menarik notifikasi bimbingan jika baru terbuka
         unawaited(fetchJourney(isRefresh: true));
       }
     } catch (_) {
@@ -349,8 +347,6 @@ class TodoController extends GetxController {
     doneSteps.value = journeySteps.where((s) => s.isDone.value).length;
   }
 
-  /// Update field isLocked secara lokal (sebelum konfirmasi server) supaya
-  /// UI langsung terasa responsif saat user menyelesaikan step berurutan.
   void _recalculateLocksLocally() {
     for (int i = 0; i < journeySteps.length; i++) {
       if (i == 0) {
@@ -419,8 +415,6 @@ class TodoController extends GetxController {
           snackPosition: SnackPosition.TOP,
         );
 
-        // Tarik ulang data agar status lock step selanjutnya & notifikasi
-        // bimbingan (jika ada) ter-refresh dari server.
         unawaited(fetchJourney(isRefresh: true));
       } else {
         final body = jsonDecode(response.body) as Map<String, dynamic>;
@@ -449,12 +443,78 @@ class TodoController extends GetxController {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // INFO MODAL (requirements & step-by-step)
+  // LIHAT DOKUMEN YANG SUDAH DIUNGGAH
+  // ═══════════════════════════════════════════════════════════════════
+
+  Future<void> viewDocument(JourneyStep step) async {
+    if (step.documentStatus.value != 'uploaded') return;
+
+    isOpeningDocument.value = true;
+    try {
+      final token = await _getToken();
+      final response = await http
+          .get(
+            Uri.parse(ApiConfig.journeyDocument(step.stepKey)),
+            headers: _authHeaders(token),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      if (response.statusCode != 200) {
+        Get.snackbar(
+          'Gagal',
+          'Dokumen tidak dapat dimuat.',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+        return;
+      }
+
+      final contentType = response.headers['content-type'] ?? '';
+      final fileName = step.uploadedFileName.value.isNotEmpty
+          ? step.uploadedFileName.value
+          : 'dokumen_${step.stepKey}';
+
+      // Gambar: tampilkan langsung dalam dialog, tidak perlu buka aplikasi lain
+      if (contentType.startsWith('image/')) {
+        Get.dialog(_DocumentPreviewDialog(bytes: response.bodyBytes, fileName: fileName));
+        return;
+      }
+
+      // PDF / lainnya: simpan sementara lalu buka dengan aplikasi bawaan sistem
+      final dir = await getTemporaryDirectory();
+      final safeName = fileName.contains('.') ? fileName : '$fileName.pdf';
+      final file = File('${dir.path}/$safeName');
+      await file.writeAsBytes(response.bodyBytes);
+
+      final result = await OpenFilex.open(file.path);
+      if (result.type != ResultType.done) {
+        Get.snackbar(
+          'Tidak Dapat Dibuka',
+          'Pastikan ada aplikasi pembaca PDF/gambar terpasang di perangkat.',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+      }
+    } catch (_) {
+      Get.snackbar(
+        'Gagal Terhubung',
+        'Tidak dapat memuat dokumen. Periksa koneksi internet Anda.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+    } finally {
+      isOpeningDocument.value = false;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // INFO MODAL
   // ═══════════════════════════════════════════════════════════════════
 
   void showStepInfo(JourneyStep step) {
-    // Data requirements/stepByStep sudah tersedia dari fetch awal,
-    // jadi modal bisa langsung dibuka tanpa request tambahan.
     Get.dialog(_StepInfoDialog(step: step));
   }
 
@@ -474,8 +534,44 @@ class TodoController extends GetxController {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DIALOG INFO LANGKAH (dipindah dari TodoView agar controller tetap ramping
-// tanpa membangun widget tree besar di dalam method)
+// DIALOG: Preview Dokumen Gambar
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DocumentPreviewDialog extends StatelessWidget {
+  const _DocumentPreviewDialog({required this.bytes, required this.fileName});
+  final List<int> bytes;
+  final String fileName;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.black,
+      insetPadding: const EdgeInsets.all(12),
+      child: Stack(
+        children: [
+          InteractiveViewer(
+            child: Image.memory(
+              Uint8List.fromList(bytes),
+              fit: BoxFit.contain,
+              width: double.infinity,
+            ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () => Get.back(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DIALOG INFO LANGKAH
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _StepInfoDialog extends StatelessWidget {

@@ -12,20 +12,20 @@ import '../../../core/values/api_config.dart';
 
 class EditProfileController extends GetxController {
   // ─── Text Controllers ──────────────────────────────────────────────
-  final nameController     = TextEditingController();
-  final emailController    = TextEditingController();
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
   final newEmailController = TextEditingController();
-  final phoneController    = TextEditingController();
-  final otpController      = TextEditingController();
+  final phoneController = TextEditingController();
+  final otpController = TextEditingController();
 
   // ─── State ────────────────────────────────────────────────────────
-  var isLoading         = false.obs;
-  var isUploadingPhoto  = false.obs;
-  var isChangingEmail   = false.obs;
-  var previewPhotoUrl   = ''.obs;
+  var isLoading = false.obs;
+  var isUploadingPhoto = false.obs;
+  var isChangingEmail = false.obs;
+  var previewPhotoUrl = ''.obs;
 
   // ─── OTP Countdown ────────────────────────────────────────────────
-  var otpCountdown      = 0.obs;   // detik tersisa
+  var otpCountdown = 0.obs; // detik tersisa
   Timer? _countdownTimer;
 
   @override
@@ -52,9 +52,9 @@ class EditProfileController extends GetxController {
   void _loadCurrentUserData() {
     if (!Get.isRegistered<ProfileController>()) return;
     final profile = Get.find<ProfileController>();
-    nameController.text   = profile.userName.value;
-    emailController.text  = profile.userEmail.value;
-    phoneController.text  = profile.userPhone.value;
+    nameController.text = profile.userName.value;
+    emailController.text = profile.userEmail.value;
+    phoneController.text = profile.userPhone.value;
     previewPhotoUrl.value = profile.userPhotoUrl.value;
   }
 
@@ -87,42 +87,51 @@ class EditProfileController extends GetxController {
         // Web: baca bytes dari XFile langsung
         final bytes = await picked.readAsBytes();
         final filename = picked.name.isNotEmpty ? picked.name : 'photo.jpg';
-        request.files.add(http.MultipartFile.fromBytes(
-          'photo',
-          bytes,
-          filename: filename,
-        ));
+        request.files.add(
+          http.MultipartFile.fromBytes('photo', bytes, filename: filename),
+        );
       } else {
         // Mobile: gunakan path
-        request.files.add(await http.MultipartFile.fromPath(
-          'photo',
-          picked.path,
-        ));
+        request.files.add(
+          await http.MultipartFile.fromPath('photo', picked.path),
+        );
       }
 
-      final streamed = await request.send().timeout(const Duration(seconds: 30));
+      final streamed = await request.send().timeout(
+        const Duration(seconds: 30),
+      );
       final response = await http.Response.fromStream(streamed);
-      final body     = jsonDecode(response.body) as Map<String, dynamic>;
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode == 200) {
-        final newUrl = body['photo_url'] as String? ?? '';
+        final newUrl = ApiConfig.resolvePhotoUrl(body['photo_url'] as String?);
         previewPhotoUrl.value = newUrl;
         if (Get.isRegistered<ProfileController>()) {
           Get.find<ProfileController>().userPhotoUrl.value = newUrl;
         }
-        Get.snackbar('Foto Diperbarui ✓', 'Foto profilmu berhasil disimpan.',
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: const Color(0xFF3D6B5F),
-            colorText: Colors.white,
-            duration: const Duration(seconds: 2));
+        Get.snackbar(
+          'Foto Diperbarui ✓',
+          'Foto profilmu berhasil disimpan.',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color(0xFF3D6B5F),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
       } else {
-        Get.snackbar('Gagal Mengunggah',
-            body['message'] ?? 'Terjadi kesalahan saat mengunggah foto.',
-            backgroundColor: Colors.redAccent, colorText: Colors.white);
+        Get.snackbar(
+          'Gagal Mengunggah',
+          body['message'] ?? 'Terjadi kesalahan saat mengunggah foto.',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
-      Get.snackbar('Error', 'Tidak dapat menghubungi server.',
-          backgroundColor: Colors.redAccent, colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Tidak dapat menghubungi server.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     } finally {
       isUploadingPhoto.value = false;
     }
@@ -143,17 +152,22 @@ class EditProfileController extends GetxController {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2)),
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
             const SizedBox(height: 20),
-            const Text('Pilih Sumber Foto',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF111827))),
+            const Text(
+              'Pilih Sumber Foto',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF111827),
+              ),
+            ),
             const SizedBox(height: 20),
             Row(
               children: [
@@ -179,8 +193,10 @@ class EditProfileController extends GetxController {
               width: double.infinity,
               child: TextButton(
                 onPressed: () => Get.back(),
-                child: const Text('Batal',
-                    style: TextStyle(color: Color(0xFF6B7280))),
+                child: const Text(
+                  'Batal',
+                  style: TextStyle(color: Color(0xFF6B7280)),
+                ),
               ),
             ),
           ],
@@ -196,8 +212,11 @@ class EditProfileController extends GetxController {
 
   Future<void> simpanPerubahan({String? otpCode}) async {
     if (nameController.text.trim().isEmpty) {
-      Get.snackbar('Perhatian', 'Nama tidak boleh kosong.',
-          backgroundColor: Colors.orange.shade100);
+      Get.snackbar(
+        'Perhatian',
+        'Nama tidak boleh kosong.',
+        backgroundColor: Colors.orange.shade100,
+      );
       return;
     }
 
@@ -206,56 +225,74 @@ class EditProfileController extends GetxController {
         : emailController.text.trim();
 
     if (isChangingEmail.value && emailTarget.isEmpty) {
-      Get.snackbar('Perhatian', 'Masukkan alamat email baru.',
-          backgroundColor: Colors.orange.shade100);
+      Get.snackbar(
+        'Perhatian',
+        'Masukkan alamat email baru.',
+        backgroundColor: Colors.orange.shade100,
+      );
       return;
     }
 
     isLoading.value = true;
     try {
       final token = await _getToken();
-      final response = await http.post(
-        Uri.parse(ApiConfig.updateProfile),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'name':  nameController.text.trim(),
-          'email': emailTarget,
-          'phone': phoneController.text.trim(),
-          if (otpCode != null) 'otp': otpCode,
-        }),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .post(
+            Uri.parse(ApiConfig.updateProfile),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({
+              'name': nameController.text.trim(),
+              'email': emailTarget,
+              'phone': phoneController.text.trim(),
+              if (otpCode != null) 'otp': otpCode,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode == 200) {
         if (data['status'] == 'require_otp') {
           isLoading.value = false;
-          _startOtpCountdown();   // mulai countdown
+          _startOtpCountdown(); // mulai countdown
           _showOtpDialog();
-          Get.snackbar('Verifikasi Diperlukan',
-              data['message'] ?? 'Cek email lama untuk kode OTP.',
-              backgroundColor: const Color(0xFFFFF8EB),
-              colorText: const Color(0xFF966C23));
+          Get.snackbar(
+            'Verifikasi Diperlukan',
+            data['message'] ?? 'Cek email lama untuk kode OTP.',
+            backgroundColor: const Color(0xFFFFF8EB),
+            colorText: const Color(0xFF966C23),
+          );
         } else {
           if (Get.isRegistered<ProfileController>()) {
             await Get.find<ProfileController>().fetchUserProfile();
           }
           Get.back();
-          Get.snackbar('Tersimpan ✓', 'Profil berhasil diperbarui.',
-              backgroundColor: const Color(0xFF3D6B5F),
-              colorText: Colors.white,
-              duration: const Duration(seconds: 2));
+          Get.snackbar(
+            'Tersimpan ✓',
+            'Profil berhasil diperbarui.',
+            backgroundColor: const Color(0xFF3D6B5F),
+            colorText: Colors.white,
+            duration: const Duration(seconds: 2),
+          );
         }
       } else {
-        Get.snackbar('Gagal', data['message'] ?? 'Terjadi kesalahan.',
-            backgroundColor: Colors.redAccent, colorText: Colors.white);
+        Get.snackbar(
+          'Gagal',
+          data['message'] ?? 'Terjadi kesalahan.',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
       }
     } catch (_) {
-      Get.snackbar('Error', 'Tidak dapat menghubungi server.',
-          backgroundColor: Colors.redAccent, colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Tidak dapat menghubungi server.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     } finally {
       isLoading.value = false;
     }
@@ -295,10 +332,7 @@ class EditProfileController extends GetxController {
 
   void _showOtpDialog() {
     otpController.clear();
-    Get.dialog(
-      _OtpDialog(controller: this),
-      barrierDismissible: false,
-    );
+    Get.dialog(_OtpDialog(controller: this), barrierDismissible: false);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -327,25 +361,39 @@ class _OtpDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 64, height: 64,
+              width: 64,
+              height: 64,
               decoration: const BoxDecoration(
-                  color: Color(0xFFFFF8EB), shape: BoxShape.circle),
-              child: const Icon(Icons.mark_email_read_outlined,
-                  color: Color(0xFFC8A96A), size: 30),
+                color: Color(0xFFFFF8EB),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.mark_email_read_outlined,
+                color: Color(0xFFC8A96A),
+                size: 30,
+              ),
             ),
             const SizedBox(height: 16),
-            const Text('Verifikasi Email',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF111827))),
+            const Text(
+              'Verifikasi Email',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF111827),
+              ),
+            ),
             const SizedBox(height: 8),
-            Obx(() => Text(
-                  'Masukkan 6-digit kode yang dikirim ke ${controller.emailController.text}.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 13, color: Color(0xFF6B7280), height: 1.5),
-                )),
+            Obx(
+              () => Text(
+                'Masukkan 6-digit kode yang dikirim ke ${controller.emailController.text}.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF6B7280),
+                  height: 1.5,
+                ),
+              ),
+            ),
             const SizedBox(height: 20),
             TextField(
               controller: controller.otpController,
@@ -353,24 +401,30 @@ class _OtpDialog extends StatelessWidget {
               maxLength: 6,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 8,
-                  color: Color(0xFF111827)),
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 8,
+                color: Color(0xFF111827),
+              ),
               decoration: InputDecoration(
                 counterText: '',
                 hintText: '······',
-                hintStyle:
-                    TextStyle(letterSpacing: 8, color: Colors.grey.shade300),
+                hintStyle: TextStyle(
+                  letterSpacing: 8,
+                  color: Colors.grey.shade300,
+                ),
                 filled: true,
                 fillColor: const Color(0xFFF5F6F5),
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none),
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide:
-                      const BorderSide(color: Color(0xFF3D6B5F), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF3D6B5F),
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -385,7 +439,9 @@ class _OtpDialog extends StatelessWidget {
                     Text(
                       'Kode kedaluwarsa dalam ${controller.otpCountdownText}',
                       style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF6B7280)),
+                        fontSize: 12,
+                        color: Color(0xFF6B7280),
+                      ),
                     )
                   else
                     const Text(
@@ -403,8 +459,7 @@ class _OtpDialog extends StatelessWidget {
                         color: expired
                             ? const Color(0xFF3D6B5F)
                             : const Color(0xFFB0B7C3),
-                        decoration:
-                            expired ? TextDecoration.underline : null,
+                        decoration: expired ? TextDecoration.underline : null,
                       ),
                     ),
                   ),
@@ -420,16 +475,21 @@ class _OtpDialog extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       side: const BorderSide(
-                          color: Color(0xFFEEEEEE), width: 1.5),
+                        color: Color(0xFFEEEEEE),
+                        width: 1.5,
+                      ),
                     ),
                     onPressed: () {
                       controller._countdownTimer?.cancel();
                       Get.back();
                     },
-                    child: const Text('Batal',
-                        style: TextStyle(color: Color(0xFF6B7280))),
+                    child: const Text(
+                      'Batal',
+                      style: TextStyle(color: Color(0xFF6B7280)),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -444,7 +504,8 @@ class _OtpDialog extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       onPressed: expired
                           ? null
@@ -453,17 +514,22 @@ class _OtpDialog extends StatelessWidget {
                                 controller._countdownTimer?.cancel();
                                 Get.back();
                                 controller.simpanPerubahan(
-                                    otpCode: controller.otpController.text
-                                        .trim());
+                                  otpCode: controller.otpController.text.trim(),
+                                );
                               } else {
                                 Get.snackbar(
-                                    'Perhatian', 'Kode OTP harus 6 digit.');
+                                  'Perhatian',
+                                  'Kode OTP harus 6 digit.',
+                                );
                               }
                             },
-                      child: const Text('Verifikasi',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Verifikasi',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     );
                   }),
                 ),
@@ -479,8 +545,11 @@ class _OtpDialog extends StatelessWidget {
 // ─── Photo Source Option ──────────────────────────────────────────────────────
 
 class _SourceOption extends StatelessWidget {
-  const _SourceOption(
-      {required this.icon, required this.label, required this.onTap});
+  const _SourceOption({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -499,11 +568,14 @@ class _SourceOption extends StatelessWidget {
           children: [
             Icon(icon, color: const Color(0xFF3D6B5F), size: 28),
             const SizedBox(height: 8),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF3D6B5F))),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF3D6B5F),
+              ),
+            ),
           ],
         ),
       ),

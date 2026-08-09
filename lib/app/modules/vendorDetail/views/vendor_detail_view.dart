@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/vendor_detail_controller.dart';
 import '../../vendor/controllers/vendor_controller.dart';
+import '../../../shared/widgets/simpul_app_bar.dart';
 
 class VendorDetailView extends GetView<VendorDetailController> {
   const VendorDetailView({Key? key}) : super(key: key);
@@ -33,27 +34,16 @@ class VendorDetailView extends GetView<VendorDetailController> {
 
     return Scaffold(
       backgroundColor: bgLight,
-      // 1. KEMBALI MENGGUNAKAN APPBAR NORMAL (Sesuai Mockup)
-      appBar: AppBar(
+
+      // ✅ Pakai SimpulAppBar dengan tombol back di leading
+      appBar: SimpulAppBar(
         backgroundColor: bgLight,
-        elevation: 0,
-        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: primaryGreen),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
-          'Simpul',
-          style: TextStyle(
-            color: primaryGreen,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            fontStyle: FontStyle.italic, // Disamakan dengan navbar utama
-          ),
-        ),
       ),
-      
-      // Tombol Contact WhatsApp melayang di bawah
+
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -70,22 +60,22 @@ class VendorDetailView extends GetView<VendorDetailController> {
               children: [
                 Icon(Icons.chat_bubble_outline, color: Colors.white, size: 20),
                 SizedBox(width: 8),
-                Text('Contact via WhatsApp', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                Text('Contact via WhatsApp',
+                    style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
         ),
       ),
-      
+
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 2. HERO SECTION: Gambar + Kartu Melayang (Sesuai Mockup)
+            // Hero Section
             Stack(
               children: [
-                // Gambar Utama
                 Container(
                   height: 320,
                   width: double.infinity,
@@ -96,11 +86,9 @@ class VendorDetailView extends GetView<VendorDetailController> {
                     ),
                   ),
                 ),
-                
-                // Kartu Putih Melayang
                 Column(
                   children: [
-                    const SizedBox(height: 260), // Mendorong kartu ke bawah gambar
+                    const SizedBox(height: 260),
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 24),
                       padding: const EdgeInsets.all(24),
@@ -108,7 +96,10 @@ class VendorDetailView extends GetView<VendorDetailController> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 20, offset: const Offset(0, 4)),
+                          BoxShadow(
+                              color: Colors.black.withAlpha(8),
+                              blurRadius: 20,
+                              offset: const Offset(0, 4)),
                         ],
                       ),
                       child: Column(
@@ -117,24 +108,35 @@ class VendorDetailView extends GetView<VendorDetailController> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              // Badge Kategori Hijau
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(color: primaryGreen.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
-                                child: Text(vendor.category.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: primaryGreen, letterSpacing: 0.5)),
+                                decoration: BoxDecoration(
+                                    color: primaryGreen.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(20)),
+                                child: Text(vendor.category.toUpperCase(),
+                                    style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        color: primaryGreen,
+                                        letterSpacing: 0.5)),
                               ),
-                              // Rating
                               Row(
                                 children: [
                                   const Icon(Icons.star_border, size: 16, color: textDark),
                                   const SizedBox(width: 4),
-                                  Text('${vendor.rating} (128)', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textGrey)),
+                                  Text('${vendor.rating} (128)',
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: textGrey)),
                                 ],
                               ),
                             ],
                           ),
                           const SizedBox(height: 16),
-                          Text(vendor.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textDark)),
+                          Text(vendor.name,
+                              style: const TextStyle(
+                                  fontSize: 22, fontWeight: FontWeight.bold, color: textDark)),
                           const SizedBox(height: 8),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,7 +146,10 @@ class VendorDetailView extends GetView<VendorDetailController> {
                                 child: Icon(Icons.location_on_outlined, size: 14, color: textGrey),
                               ),
                               const SizedBox(width: 6),
-                              Expanded(child: Text(vendor.location, style: const TextStyle(fontSize: 12, color: textGrey, height: 1.4))),
+                              Expanded(
+                                  child: Text(vendor.location,
+                                      style: const TextStyle(
+                                          fontSize: 12, color: textGrey, height: 1.4))),
                             ],
                           ),
                         ],
@@ -154,109 +159,111 @@ class VendorDetailView extends GetView<VendorDetailController> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 32),
 
-            // SECTION 1: Filosofi / Tentang Kami
+            // Tentang Kami
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Tentang Kami', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
+                  const Text('Tentang Kami',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
                   const SizedBox(height: 12),
-                  Text(
-                    vendor.philosophy,
-                    style: TextStyle(fontSize: 13, color: textGrey.withOpacity(0.8), height: 1.6),
-                  ),
+                  Text(vendor.philosophy,
+                      style: TextStyle(
+                          fontSize: 13, color: textGrey.withOpacity(0.8), height: 1.6)),
                 ],
               ),
             ),
 
             const SizedBox(height: 32),
 
-            // SECTION 2: Portofolio
+            // Portfolio
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(_getGalleryTitle(vendor.category), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
-                  
-                  // PERUBAHAN: Menjadikan teks bisa diklik
+                  Text(_getGalleryTitle(vendor.category),
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
                   GestureDetector(
                     onTap: () => controller.lihatSemuaPortofolio(),
-                    child: Text(
-                      'View All', 
-                      style: TextStyle(
-                        fontSize: 12, 
-                        fontWeight: FontWeight.bold, 
-                        color: primaryGreen, // Ubah jadi hijau agar terlihat seperti link
-                      ),
-                    ),
+                    child: const Text('View All',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: primaryGreen)),
                   ),
-                  
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            
             vendor.portfolioUrls.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Text('Belum ada foto galeri.', style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: textGrey)),
-                )
-              : SizedBox(
-                  height: 160,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: vendor.portfolioUrls.length,
-                    separatorBuilder: (context, index) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          vendor.portfolioUrls[index],
-                          width: 120,
-                          height: 160,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            width: 120, height: 160, color: borderGrey, child: const Icon(Icons.image_not_supported),
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Text('Belum ada foto galeri.',
+                        style: TextStyle(
+                            fontSize: 13, fontStyle: FontStyle.italic, color: textGrey)),
+                  )
+                : SizedBox(
+                    height: 160,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: vendor.portfolioUrls.length,
+                      separatorBuilder: (context, index) => const SizedBox(width: 12),
+                      itemBuilder: (context, index) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            vendor.portfolioUrls[index],
+                            width: 120,
+                            height: 160,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                                width: 120,
+                                height: 160,
+                                color: borderGrey,
+                                child: const Icon(Icons.image_not_supported)),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
-                ),
 
             const SizedBox(height: 32),
 
-            // SECTION 3: Paket Harga Dinamis
+            // Paket Harga
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24.0),
-              child: Text('Investment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
+              child: Text('Investment',
+                  style:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
             ),
             const SizedBox(height: 16),
-            
             vendor.packages.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Text('Daftar paket harga belum tersedia.', style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: textGrey)),
-                )
-              : Column(
-                  children: vendor.packages.map<Widget>((VendorPackage paket) {
-                    return _buildPricingCard(
-                      title: paket.title,
-                      subtitle: paket.subtitle,
-                      price: paket.price,
-                      badgeText: paket.badgeText,
-                      features: paket.features,
-                    );
-                  }).toList(),
-                ),
-            
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Text('Daftar paket harga belum tersedia.',
+                        style: TextStyle(
+                            fontSize: 13, fontStyle: FontStyle.italic, color: textGrey)),
+                  )
+                : Column(
+                    children: vendor.packages.map<Widget>((VendorPackage paket) {
+                      return _buildPricingCard(
+                        title: paket.title,
+                        subtitle: paket.subtitle,
+                        price: paket.price,
+                        badgeText: paket.badgeText,
+                        features: paket.features,
+                      );
+                    }).toList(),
+                  ),
+
             const SizedBox(height: 30),
           ],
         ),
@@ -264,7 +271,13 @@ class VendorDetailView extends GetView<VendorDetailController> {
     );
   }
 
-  Widget _buildPricingCard({required String title, required String subtitle, required String price, String? badgeText, required List<String> features}) {
+  Widget _buildPricingCard({
+    required String title,
+    required String subtitle,
+    required String price,
+    String? badgeText,
+    required List<String> features,
+  }) {
     return Container(
       margin: const EdgeInsets.only(left: 24, right: 24, bottom: 16),
       padding: const EdgeInsets.all(24),
@@ -272,7 +285,9 @@ class VendorDetailView extends GetView<VendorDetailController> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderGrey),
-        boxShadow: [BoxShadow(color: Colors.black.withAlpha(5), blurRadius: 10, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withAlpha(5), blurRadius: 10, offset: const Offset(0, 2))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,19 +295,28 @@ class VendorDetailView extends GetView<VendorDetailController> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark))),
+              Expanded(
+                  child: Text(title,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold, color: textDark))),
               if (badgeText != null && badgeText.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: primaryGreen.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                  child: Text(badgeText, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primaryGreen)),
+                  decoration: BoxDecoration(
+                      color: primaryGreen.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Text(badgeText,
+                      style: const TextStyle(
+                          fontSize: 10, fontWeight: FontWeight.bold, color: primaryGreen)),
                 ),
             ],
           ),
           const SizedBox(height: 6),
           Text(subtitle, style: const TextStyle(fontSize: 12, color: textGrey)),
           const SizedBox(height: 16),
-          Text(price, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: primaryGreen)),
+          Text(price,
+              style: const TextStyle(
+                  fontSize: 28, fontWeight: FontWeight.w800, color: primaryGreen)),
           const SizedBox(height: 20),
           ...features.map((feature) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -300,7 +324,9 @@ class VendorDetailView extends GetView<VendorDetailController> {
                   children: [
                     const Icon(Icons.check_circle_outline, size: 16, color: textGrey),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(feature, style: const TextStyle(fontSize: 12, color: textDark))),
+                    Expanded(
+                        child: Text(feature,
+                            style: const TextStyle(fontSize: 12, color: textDark))),
                   ],
                 ),
               )),

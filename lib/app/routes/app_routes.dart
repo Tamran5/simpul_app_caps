@@ -27,6 +27,7 @@ abstract class Routes {
   static const ABOUT = _Paths.ABOUT;
   static const LEGAL_DETAIL_VIEW = _Paths.LEGAL_DETAIL_VIEW;
   static const LEGAL_DETAIL = _Paths.LEGAL_DETAIL;
+  static const REGISTER_OTP = _Paths.REGISTER_OTP;
 }
 
 abstract class _Paths {
@@ -55,4 +56,5 @@ abstract class _Paths {
   static const ABOUT = '/about';
   static const LEGAL_DETAIL_VIEW = '/legal-detail-view';
   static const LEGAL_DETAIL = '/legal-detail';
+  static const REGISTER_OTP = '/register-otp';
 }
